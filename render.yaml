@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: speakwise-ai
+    env: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_PATH
+        value: /var/data/speakwise.db
+      - key: AI_API_KEY
+        sync: false
+    disk:
+      name: speakwise-storage
+      mountPath: /var/data
+      sizeGB: 1
