@@ -8,9 +8,7 @@ SpeakWise AI is an intelligent, AI-powered platform designed specifically to emp
 Many Marathi-speaking learners face difficulty when transitioning their thoughts into English. Common hurdles include:
 
 ❌ Translating sentences accurately without losing natural context.
-
 ❌ Lack of proper grammar and vocabulary feedback.
-
 ❌ Fear of making mistakes during spoken conversations.
 
 SpeakWise AI eliminates these barriers by offering a safe, intuitive, and interactive space for daily English practice. 💡
@@ -24,92 +22,104 @@ SpeakWise AI eliminates these barriers by offering a safe, intuitive, and intera
 
 📚 Master Grammar Fundamentals: Deliver structured lessons from basic sentence structure to advanced nuances.
 
+✨ 4.Key Feature
+| # | Feature                     | Description                             |
+| - | --------------------------- | --------------------------------------- |
+| 1 | 🔀 **Native Translation**   | Marathi/Roman Marathi → natural English |
+| 2 | 📝 **Grammar Correction**   | Detects and explains grammar mistakes   |
+| 3 | 📖 **Grammar Learning**     | Basic to advanced grammar lessons       |
+| 4 | 🗣️ **Pronunciation Guide** | Audio + meanings + examples             |
+| 5 | 💬 **English Practice**     | Interactive English practice            |
+| 6 | 🎙️ **Voice Support**       | Speech-to-Text + Text-to-Speech         |
 
-✨ 4. Key Features
-Feature	Description
-🔀 Native Translation	Translates Marathi or Roman Marathi ("Tu kasa ahes?") into natural English.
-📝 Grammar Correction	Detects errors in real time, fixes sentences, and explains grammar rules.
-📖 Grammar Learning	Offers structured lessons from basic topics to advanced sentence structures.
-🗣️ Pronunciation Guide	Plays English audio with Marathi meanings, definitions, and usage examples.
-💬 English Practice	Enables interactive conversations, topic discussions, and translation exercises.
-🎙️ Voice Support	Uses Speech-to-Text for voice input and Text-to-Speech for audio feedback.
 
-📂 5. Project Structure
-Plaintext
+📂 5.Project Structure
 speakwise-ai/
 │
-├── client/                     # Frontend Application
+├── client/
 │   ├── public/
+│   │   └── ...
+│   │
 │   ├── src/
-│   │   ├── assets/             # Media & static files
-│   │   ├── components/         # Reusable UI components
-│   │   ├── pages/              # App views (Dashboard, Practice, etc.)
-│   │   ├── services/           # Frontend API integration
+│   │   ├── assets/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── services/
 │   │   ├── App.jsx
-│   │   └── main.jsx
+│   │   ├── main.jsx
+│   │   └── ...
+│   │
 │   ├── index.html
 │   ├── package.json
+│   ├── package-lock.json
 │   └── vite.config.js
 │
-├── server/                     # Backend Application
+├── server/
 │   ├── routes/
-│   │   ├── authRoutes.js       # User authentication
-│   │   ├── aiRoutes.js         # Core AI interaction
+│   │   ├── authRoutes.js
+│   │   ├── aiRoutes.js
 │   │   ├── pronunciationRoutes.js
 │   │   ├── practiceRoutes.js
-│   │   ├── streakRoutes.js     # User daily engagement
-│   │   └── progressRoutes.js   # Analytics tracking
+│   │   ├── streakRoutes.js
+│   │   └── progressRoutes.js
+│   │
 │   ├── services/
-│   │   └── aiTutorService.js   # NLP logic & prompt handling
+│   │   ├── aiTutorService.js
+│   │   └── ...
+│   │
 │   ├── db/
-│   │   └── database.js         # DB Connection
-│   └── index.js                # Server entry point
+│   │   └── database.js
+│   │
+│   ├── data/
+│   │   └── .gitkeep
+│   │
+│   └── index.js
 │
 ├── package.json
-├── render.yaml                 # Deployment configuration
-├── .env.example
-└── README.md
+├── package-lock.json
+├── README.md
+├── DEPLOYMENT.md
+├── render.yaml
+├── .gitignore
+└── .env.example
+
 🧠 6. AI & NLP Concepts Used
 Rather than relying on simple classification models (e.g., Decision Trees, K-Means), SpeakWise AI leverages specialized Natural Language Processing tools and generative AI workflows:
 
 🔍 Language & Intent Detection: Identifies native script vs. Romanized Marathi inputs.
-
 🔤 Roman Marathi Normalization: Converts phonetic Latin typing into standardized regional representations.
-
 🎯 Grammar Error Correction (GEC): Identifies syntactical errors and generates corrective suggestions.
-
 💬 Context-Aware Conversational AI: Tracks dialog context to maintain realistic, fluid conversations.
-
 🎙️ Speech Processing: Handles STT audio transcription and TTS voice synthesis.
 
-🛠️ 7. Tech Stack
-Layer	Technologies
-Frontend	React (Vite), HTML5, CSS3, JavaScript
-Backend	Python, Flask, Node.js (Express ecosystem)
-AI / Speech Services	NLP APIs, Web Speech API (STT / TTS)
-Architecture	RESTful Communication, Modular Routing
-⚙️ 8. System Workflow
-Plaintext
-[ User Input (Text / Speech) ]
-              │
-              ▼
-[ Language & Intent Understanding ]
-              │
-              ▼
-[ AI / NLP Processing Engine ]
-              │
-  ┌───────────┼───────────┬───────────┬───────────┐
-  ▼           ▼           ▼           ▼           ▼
-Translation  Grammar    Dialogue  Pronounce  Practice
-             Check       Engine    & Definition Module
-  │           │           │           │           │
-  └───────────┴───────────┼───────────┴───────────┘
-                          │
-                          ▼
-[ Structured Output: Text & Audio Response ]
+7. How the System Works
+
+User Input
+    |
+    v
+Language / Intent Understanding
+    |
+    v
+AI / NLP Processing
+    |
+    +----> Translation
+    |
+    +----> Grammar Correction
+    |
+    +----> Conversation
+    |
+    +----> Pronunciation / Meaning
+    |
+    +----> Practice
+    |
+    v
+Response
+    |
+    +----> Text
+    +----> Audio
 
 
-🚀 9. How to Use SpeakWise AI
+🚀 8 How to Use SpeakWise AI
 🔐 Log In: Create an account or sign in to save your learning metrics.
 
 📊 Dashboard: Select your desired module from the side navigation menu.
@@ -126,7 +136,7 @@ Translation  Grammar    Dialogue  Pronounce  Practice
 
 
 
-🔮 10. Roadmap & Future Enhancements
+🔮 9. Roadmap & Future Enhancements
 🌐 Multi-Language Support: Expand coverage to additional regional Indian languages.
 
 🎯 Personalized Learning Paths: AI-curated study plans tailored to user weaknesses.
@@ -140,5 +150,5 @@ Translation  Grammar    Dialogue  Pronounce  Practice
 📶 Offline Accessibility: Edge-cached lessons for low-connectivity environments.
 
 
-📌 11. Conclusion
+📌 10. Conclusion
 SpeakWise AI blends modern NLP, voice processing, and pedagogical grammar frameworks into a supportive learning partner. It transforms native Marathi thought patterns into spoken English fluency—empowering users to communicate with absolute confidence. 🌟

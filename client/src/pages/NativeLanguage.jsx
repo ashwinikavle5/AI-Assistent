@@ -65,12 +65,12 @@ export const NativeLanguage = () => {
         setError('');
       } else {
         setTranslation(null);
-        setError(data.message || "I didn't fully understand that sentence.");
+        setError(data.message || data.error || "I didn't fully understand that sentence.");
       }
     } catch (err) {
       console.error('Translation error:', err);
       setTranslation(null);
-      setError('Translation service is temporarily unavailable. Please try again.');
+      setError(err?.message ? `Translation error: ${err.message}` : 'Translation request failed. Please try again.');
     } finally {
       setLoading(false);
     }

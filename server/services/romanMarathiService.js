@@ -176,22 +176,58 @@ const PHRASE_DICTIONARY = [
     intent: "ASK_WHAT_DOING"
   },
 
-  // 6. "mala english shikaycha aahe" / "mala English bolayla practice karaychi aahe"
+  // 6a. "mala english shikaycha aahe" / "मला इंग्रजी शिकायची आहे."
+  {
+    patterns: [
+      /\b(?:mala|मला)\s+(?:english|ingraji|इंग्रजी|इंग्लिश)\s+(?:shikaych[aeiy]*|शिकाय[चचीचेचा])\s*(?:aa?he|आहे)?\b/i,
+      /\b(?:mala|मला)\s+(?:shikaych[aeiy]*|शिकाय[चचीचेचा])\s+(?:aa?he|आहे)\s+(?:english|ingraji|इंग्रजी|इंग्लिश)\b/i,
+      /\bmala\s+english\s+shikaychay\b/i,
+      /\bmala\s+ingraji\s+shikaych\s+ahe\b/i
+    ],
+    marathi: "मला इंग्रजी शिकायची आहे.",
+    english: "I want to learn English.",
+    category: "learning",
+    intent: "WANT_LEARN_ENGLISH",
+    learningSupport: {
+      naturalEnglish: "I want to learn English.",
+      simpleExplanation: "Use 'I want to learn...' to express a desire or goal to acquire a new language or skill.",
+      example: "I want to learn English so I can speak with confidence."
+    }
+  },
+
+  // 6b. "mala English bolayla practice karaychi aahe" / "मला इंग्रजी बोलायला practice करायची आहे"
   {
     patterns: [
       /\bmala\s+english\s+(?:bolayla\s+)?practice\s+(?:karaychi|karaycha)\s*(?:aa?he)?\b/i,
-      /\bmala\s+english\s+shikaycha\s+aa?he\b/i,
-      /\bmala\s+ingraji\s+shikaych\s+ahe\b/i,
-      /\bmala\s+english\s+bolaycha\s+aa?he\b/i,
-      /\bmala\s+english\s+shikaychay\b/i,
-      /\bमला\s+इंग्रजी\s+शिकायचं\s+आहे\b/i,
-      /\bमला\s+english\s+बोलायला\s+practice\s+करायची\s+आहे\b/i,
+      /\b(?:mala|मला)\s+(?:english|इंग्रजी)\s+बोलायला\s+(?:practice|सराव)\s+करायची\s+आहे\b/i,
       /\bmala\s+english\s+बोलायला\s+practice\s+karaychi\s+aahe\b/i
     ],
     marathi: "मला इंग्रजी बोलायला practice करायची आहे.",
     english: "I want to practice speaking English.",
     category: "learning",
-    intent: "WANT_PRACTICE_ENGLISH"
+    intent: "WANT_PRACTICE_ENGLISH",
+    learningSupport: {
+      naturalEnglish: "I want to practice speaking English.",
+      simpleExplanation: "Use this to express your desire to practice spoken English skills.",
+      example: "I want to practice speaking English every day."
+    }
+  },
+
+  // 6c. "मला आज कॉलेजला जायचं आहे" / "mala aaj college la jaych ahe"
+  {
+    patterns: [
+      /\b(?:mala|मला)\s+(?:aaj|aj|आज)\s+(?:college|कॉलेज)(?:la|ला)?\s+(?:jaych[aeiy]*|jaaych[aeiy]*|जाय[चचीचेचा])\s*(?:aa?he|आहे)?\b/i,
+      /\b(?:mala|मला)\s+(?:college|कॉलेज)(?:la|ला)?\s+(?:jaych[aeiy]*|jaaych[aeiy]*|जाय[चचीचेचा])\s*(?:aa?he|आहे)?\b/i
+    ],
+    marathi: "मला आज कॉलेजला जायचं आहे.",
+    english: "I have to go to college today.",
+    category: "college",
+    intent: "HAVE_TO_GO_COLLEGE",
+    learningSupport: {
+      naturalEnglish: "I have to go to college today.",
+      simpleExplanation: "We use 'I have to...' to express an obligation or plan to do something today.",
+      example: "I have to go to college today because we have an important lecture."
+    }
   },
 
   // 7. "interview" / "aaj majha interview aahe"
@@ -613,6 +649,11 @@ const translateMarathiToEnglish = (text) => {
     "काय चाललंय": "What's going on?",
     "काय करतोय": "What are you doing?",
     "मला इंग्रजी शिकायचं आहे": "I want to learn English.",
+    "मला इंग्रजी शिकायची आहे": "I want to learn English.",
+    "मला इंग्रजी शिकायचे आहे": "I want to learn English.",
+    "मला इंग्रजी शिकायचा आहे": "I want to learn English.",
+    "मला इंग्लिश शिकायची आहे": "I want to learn English.",
+    "मला इंग्लिश शिकायचं आहे": "I want to learn English.",
     "मी कॉलेजला जात आहे": "I am going to college.",
     "उद्या भेटू": "See you tomorrow.",
     "कुठे आहेस": "Where are you?",
@@ -622,6 +663,13 @@ const translateMarathiToEnglish = (text) => {
     "आज college मध्ये presentation आहे": "I have a presentation in college today.",
     "आज कॉलेजमध्ये presentation होतं": "Today, I had a presentation at college.",
     "मला आज कॉलेजला जायचं आहे": "I have to go to college today.",
+    "मला आज कॉलेजला जायचे आहे": "I have to go to college today.",
+    "मला आज कॉलेजला जायचा आहे": "I have to go to college today.",
+    "मला कॉलेजला जायचं आहे": "I have to go to college.",
+    "मला कॉलेजला जायचे आहे": "I have to go to college.",
+    "मला अभ्यास करायचा आहे": "I want to study.",
+    "मला मदत हवी आहे": "I need help.",
+    "मला मदत पाहिजे": "I need help.",
     "मला इंग्रजी बोलायला भीती वाटते": "I am afraid to speak English.",
     "मला English बोलायला भीती वाटते": "I am afraid to speak English.",
     "मला इंग्रजीमध्ये answer देता येत नाही": "I can't answer in English.",
@@ -692,35 +740,230 @@ const convertRomanMarathiToDevanagari = (text) => {
   return converted.join('');
 };
 
-// Fast translation helper for Marathi -> English using reliable translation service with 2.5s timeout
+// Local rule-based translation for common Marathi grammar patterns and vocabulary
+const translateMarathiRuleBased = (text) => {
+  if (!text || typeof text !== 'string') return null;
+  const clean = text.trim();
+
+  // 1. Desire / Intention: मला [X] शिकायची / शिकायचं / शिकायचे / शिकायचा आहे
+  const learnPattern = clean.match(/मला\s+(.*?)\s+शिकाय[चचीचेचा]\s+(?:आहे|नाही)/i);
+  if (learnPattern) {
+    const topic = learnPattern[1].trim();
+    const isNeg = clean.includes('नाही');
+    const topicMap = {
+      'इंग्रजी': 'English',
+      'इंग्लिश': 'English',
+      'मराठी': 'Marathi',
+      'हिंदी': 'Hindi',
+      'संगणक': 'computers',
+      'कोडिंग': 'coding',
+      'गाडी चालवायला': 'to drive',
+      'गाणे': 'to sing',
+      'पोहणे': 'to swim',
+      'नवीन भाषा': 'a new language'
+    };
+    const topicEng = topicMap[topic] || topic;
+    return isNeg ? `I do not want to learn ${topicEng}.` : `I want to learn ${topicEng}.`;
+  }
+
+  // e.g. मला [आज/उद्या/काल] [X]ला जायचं / जायची / जायचे आहे
+  const goPattern = clean.match(/मला\s+(?:(आज|उद्या|काल)\s+)?(.*?)(?:ला)?\s+जाय[चचीचेचा]\s+(?:आहे|नाही)/i);
+  if (goPattern) {
+    const timeWord = goPattern[1] || '';
+    const dest = goPattern[2].trim();
+    const isNeg = clean.includes('नाही');
+    const destMap = {
+      'कॉलेज': 'college',
+      'शाळा': 'school',
+      'शाळेत': 'school',
+      'ऑफिस': 'office',
+      'ऑफिसला': 'office',
+      'घरी': 'home',
+      'गावाला': 'my village',
+      'गावी': 'my village',
+      'बाहेर': 'out',
+      'मार्केट': 'the market'
+    };
+    const destEng = destMap[dest] || dest;
+    const timeEng = timeWord === 'आज' ? ' today' : timeWord === 'उद्या' ? ' tomorrow' : '';
+    return isNeg
+      ? `I do not have to go to ${destEng}${timeEng}.`
+      : `I have to go to ${destEng}${timeEng}.`;
+  }
+
+  // e.g. मला [X] करायचा / करायची / करायचं आहे
+  const doPattern = clean.match(/मला\s+(.*?)\s+कराय[चचीचेचा]\s+(?:आहे|नाही)/i);
+  if (doPattern) {
+    const act = doPattern[1].trim();
+    const isNeg = clean.includes('नाही');
+    const actMap = {
+      'अभ्यास': 'study',
+      'काम': 'work',
+      'व्यायाम': 'exercise',
+      'विश्रांती': 'rest',
+      'मदत': 'help',
+      'फोन': 'make a call',
+      'प्रयत्न': 'try'
+    };
+    const actEng = actMap[act] || `do ${act}`;
+    return isNeg ? `I do not want to ${actEng}.` : `I want to ${actEng}.`;
+  }
+
+  // 2. Needs / Wants: मला [X] पाहिजे / हवे आहे / हवी आहे
+  const needPattern = clean.match(/मला\s+(.*?)\s+(?:पाहिजे|हवे\s+आहे|हवी\s+आहे|हवा\s+आहे|हवेत)/i);
+  if (needPattern) {
+    const item = needPattern[1].trim();
+    const itemMap = {
+      'मदत': 'help',
+      'पाणी': 'water',
+      'वेळ': 'time',
+      'पैसे': 'money',
+      'पुस्तक': 'a book',
+      'सुट्टी': 'leave / a holiday'
+    };
+    const itemEng = itemMap[item] || item;
+    return `I need ${itemEng}.`;
+  }
+
+  // 3. Continuous actions: मी [X] [verb]त आहे / नाही
+  const contPattern = clean.match(/मी\s+(.*?)\s*(करत|जात|येत|शिकत|वाचत|पाहत|लिहीत|बोलत)\s+(?:आहे|नाही)/i);
+  if (contPattern) {
+    const obj = (contPattern[1] || '').trim();
+    const verb = contPattern[2];
+    const isNeg = clean.includes('नाही');
+    const verbMap = {
+      'करत': obj === 'अभ्यास' ? 'studying' : obj === 'काम' ? 'working' : 'doing',
+      'जात': 'going',
+      'येत': 'coming',
+      'शिकत': 'learning',
+      'वाचत': 'reading',
+      'पाहत': 'watching',
+      'लिहीत': 'writing',
+      'बोलत': 'speaking'
+    };
+    const verbEng = verbMap[verb] || 'doing';
+    const objMap = {
+      'कॉलेजला': 'to college',
+      'घरी': 'home',
+      'इंग्रजी': 'English',
+      'पुस्तक': 'a book',
+      'टीव्ही': 'TV'
+    };
+    const objEng = objMap[obj] || (verb === 'करत' && (obj === 'अभ्यास' || obj === 'काम') ? '' : obj);
+    const fullAction = [verbEng, objEng].filter(Boolean).join(' ');
+    return isNeg ? `I am not ${fullAction}.` : `I am ${fullAction}.`;
+  }
+
+  // 4. Questions: तू / तुम्ही ...
+  if (/\b(?:tu|तू)\s+(?:kasa|कसा|kashi|कशी)\s+(?:ahes|आहेस)\b/i.test(clean) ||
+      /\b(?:tumhi|तुम्ही)\s+(?:kase|कसे|kashi|कशी)\s+(?:ahat|आहात)\b/i.test(clean)) {
+    return 'How are you?';
+  }
+  if (/\b(?:tujha?|तुझं|तुझे|तुमचे)\s+नाव\s+काय\s+आहे\b/i.test(clean)) {
+    return 'What is your name?';
+  }
+  if (/\bकाय\s+(?:करत\s+आहेस|करतोस|चाललंय)\b/i.test(clean)) {
+    return "What are you doing?";
+  }
+  if (/\bकुठे\s+(?:आहेस|चाललास|चाललीस|राहतोस)\b/i.test(clean)) {
+    return "Where are you?";
+  }
+
+  // 5. Past tense actions: मी [X] गेलो / आलो / जेवलो
+  if (/\bमी\s+जेवलो\b/i.test(clean) || /\bमाझं\s+जेवण\s+झालं\b/i.test(clean)) {
+    return 'I had my meal / I have eaten.';
+  }
+  if (/\bमी\s+अभ्यास\s+केला\b/i.test(clean)) {
+    return 'I studied.';
+  }
+  if (/\bमी\s+कॉलेजला\s+गेलो\b/i.test(clean)) {
+    return 'I went to college.';
+  }
+
+  return null;
+};
+
+// Reliable translation helper for Marathi -> English using free translation API with multi-tier fallback
 const translateMarathiSentenceToEnglish = async (marathiText) => {
-  return new Promise((resolve, reject) => {
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=mr&tl=en&dt=t&q=${encodeURIComponent(marathiText)}`;
-    const req = https.get(url, (res) => {
-      if (res.statusCode !== 200) return reject(new Error(`Status ${res.statusCode}`));
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        try {
-          const parsed = JSON.parse(data);
-          if (Array.isArray(parsed) && Array.isArray(parsed[0])) {
-            const fullTranslation = parsed[0].map(item => item[0]).filter(Boolean).join('');
-            resolve(fullTranslation.trim());
-          } else {
+  // Strategy 1: MyMemory Public Translation API
+  try {
+    const myMemoryResult = await new Promise((resolve) => {
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(marathiText)}&langpair=mr|en`;
+      const req = https.get(url, (res) => {
+        if (res.statusCode !== 200) return resolve(null);
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          try {
+            const parsed = JSON.parse(data);
+            const text = parsed?.responseData?.translatedText;
+            if (text && !text.startsWith('MYMEMORY WARNING') && text.trim().toLowerCase() !== marathiText.trim().toLowerCase()) {
+              resolve(text.trim());
+            } else {
+              resolve(null);
+            }
+          } catch (e) {
             resolve(null);
           }
-        } catch (e) {
-          resolve(null);
-        }
+        });
+      });
+      req.on('error', () => resolve(null));
+      req.setTimeout(3500, () => {
+        req.destroy();
+        resolve(null);
       });
     });
 
-    req.on('error', (err) => reject(err));
-    req.setTimeout(2500, () => {
-      req.destroy();
-      reject(new Error('Translation timeout'));
+    if (myMemoryResult && myMemoryResult.length > 0) {
+      return myMemoryResult;
+    }
+  } catch (err) {
+    // Continue to Google fallback
+  }
+
+  // Strategy 2: Google Translate API fallback with desktop User-Agent
+  try {
+    const googleResult = await new Promise((resolve) => {
+      const options = {
+        hostname: 'translate.googleapis.com',
+        path: `/translate_a/single?client=gtx&sl=mr&tl=en&dt=t&q=${encodeURIComponent(marathiText)}`,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      };
+      const req = https.get(options, (res) => {
+        if (res.statusCode !== 200) return resolve(null);
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          try {
+            const parsed = JSON.parse(data);
+            if (Array.isArray(parsed) && Array.isArray(parsed[0])) {
+              const fullTranslation = parsed[0].map(item => item[0]).filter(Boolean).join('');
+              resolve(fullTranslation.trim());
+            } else {
+              resolve(null);
+            }
+          } catch (e) {
+            resolve(null);
+          }
+        });
+      });
+      req.on('error', () => resolve(null));
+      req.setTimeout(2500, () => {
+        req.destroy();
+        resolve(null);
+      });
     });
-  });
+
+    if (googleResult && googleResult.length > 0) {
+      return googleResult;
+    }
+  } catch (err) {
+    // Continue to local rules
+  }
+
+  return null;
 };
 
 // Comprehensive Native to English Translation Orchestrator
@@ -741,7 +984,7 @@ const translateNativeToEnglish = async (rawText) => {
     return {
       success: false,
       error: 'UNCLEAR',
-      message: "I didn't fully understand that sentence."
+      message: "I didn't fully understand that sentence. Please enter a valid sentence."
     };
   }
 
@@ -796,15 +1039,15 @@ const translateNativeToEnglish = async (rawText) => {
     }
   }
 
-  // 3. If still not matched, translate whole Marathi sentence using dynamic translation engine
+  // 3. If still not matched, try dynamic translation engine (MyMemory + Google)
   let networkError = false;
+  let lastErrorMessage = '';
   if (!englishTranslation) {
     try {
       const onlineEng = await translateMarathiSentenceToEnglish(convertedMarathi);
       if (onlineEng && onlineEng.trim()) {
         const trimmed = onlineEng.trim();
         const hasDevanagari = /[\u0900-\u097F]/.test(clean);
-        // If translation just echoed back input with no Devanagari conversion and input is not translated
         const isEcho = trimmed.toLowerCase() === clean.toLowerCase() && !hasDevanagari;
         if (!isEcho) {
           englishTranslation = trimmed;
@@ -819,10 +1062,25 @@ const translateNativeToEnglish = async (rawText) => {
     } catch (err) {
       console.warn('Online Marathi translation warning:', err.message);
       networkError = true;
+      lastErrorMessage = err.message;
     }
   }
 
-  // 4. Return result if translation was successful
+  // 4. If still not matched, check local rule-based grammar and semantic sentence translator
+  if (!englishTranslation) {
+    const localEng = translateMarathiRuleBased(convertedMarathi) || translateMarathiRuleBased(clean);
+    if (localEng && localEng.trim()) {
+      englishTranslation = localEng.trim();
+      marathiNormalized = convertedMarathi;
+      learningSupport = {
+        naturalEnglish: englishTranslation,
+        simpleExplanation: "This is a natural way in English to express your Marathi thought clearly.",
+        example: `Practice saying: "${englishTranslation}" in your daily conversations.`
+      };
+    }
+  }
+
+  // 5. Return result if translation was successful
   if (englishTranslation) {
     englishTranslation = englishTranslation.replace(/^\s*["']|["']\s*$/g, '').trim();
 
@@ -844,20 +1102,20 @@ const translateNativeToEnglish = async (rawText) => {
     };
   }
 
-  // 5. If network or service failed on a plausible sentence
+  // 6. If network failed and no local translation could be matched, show the real error
   if (networkError) {
     return {
       success: false,
-      error: 'SERVICE_UNAVAILABLE',
-      message: 'Translation service is temporarily unavailable. Please try again.'
+      error: 'TRANSLATION_FAILED',
+      message: `Translation error: ${lastErrorMessage || 'Network connection issue'}. Please try again.`
     };
   }
 
-  // 6. Genuinely unclear sentence
+  // 7. Genuinely unclear sentence
   return {
     success: false,
     error: 'UNCLEAR',
-    message: "I didn't fully understand that sentence."
+    message: "I didn't fully understand that sentence. Please check the spelling or phrasing."
   };
 };
 

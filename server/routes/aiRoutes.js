@@ -220,14 +220,23 @@ router.post('/chat', authenticateToken, async (req, res) => {
 router.post('/translate', async (req, res) => {
   try {
     const { text } = req.body;
+
+    if (!text || !text.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'EMPTY_INPUT',
+        message: 'Please enter a Marathi or Roman Marathi sentence.'
+      });
+    }
+
     const result = await translateNativeToEnglish(text);
     return res.json(result);
   } catch (err) {
     console.error('Error in translate route:', err);
     res.status(500).json({
       success: false,
-      error: 'SERVICE_UNAVAILABLE',
-      message: 'Translation service is temporarily unavailable. Please try again.'
+      error: 'SERVER_ERROR',
+      message: err?.message || 'Error processing translation request.'
     });
   }
 });
