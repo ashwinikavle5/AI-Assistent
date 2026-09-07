@@ -3,7 +3,9 @@ const router = express.Router();
 const { runQuery, getRow, getAll } = require('../db/database');
 const { authenticateToken } = require('../middleware/authMiddleware');
 const { generateTutorResponse } = require('../services/aiTutorService');
+const { detectLanguage, processRomanMarathi, translateMarathiToEnglish, translateNativeToEnglish } = require('../services/romanMarathiService');
 const { recordActivity } = require('../services/streakService');
+const { getPracticeSentence, evaluatePracticeAnswer, getSentenceById } = require('../services/practiceTranslationService');
 
 // Get all conversations for current user
 router.get('/conversations', authenticateToken, async (req, res) => {
@@ -84,7 +86,8 @@ router.get('/conversations/:id/messages', authenticateToken, async (req, res) =>
 
     const formattedMessages = messages.map(m => ({
       ...m,
-      grammar_correction: m.grammar_correction ? JSON.parse(m.grammar_correction) : null
+      grammar_correction: m.grammar_correction ? JSON.parse(m.grammar_correction) : null,
+      analysis: m.analysis ? JSON.parse(m.analysis) : null
     }));
 
     res.json({
@@ -100,7 +103,7 @@ router.get('/conversations/:id/messages', authenticateToken, async (req, res) =>
 // Send message to AI Tutor
 router.post('/chat', authenticateToken, async (req, res) => {
   try {
-    const { conversationId, text } = req.body;
+    const { conversationId, text, practiceMode, assistantMode } = req.body;
 
     if (!text || !text.trim()) {
       return res.status(400).json({ success: false, message: 'Message text cannot be empty.' });
@@ -134,7 +137,7 @@ router.post('/chat', authenticateToken, async (req, res) => {
     const recentMessages = await getAll(`
       SELECT sender, text FROM messages
       WHERE conversation_id = ?
-      ORDER BY created_at DESC LIMIT 6
+      ORDER BY created_at DESC LIMIT 10
     `, [activeConvId]);
     recentMessages.reverse();
 
@@ -143,7 +146,9 @@ router.post('/chat', authenticateToken, async (req, res) => {
       userMessage: text.trim(),
       userLevel,
       conversationHistory: recentMessages,
-      customApiKey
+      customApiKey,
+      practiceMode: Boolean(practiceMode),
+      assistantMode: assistantMode || 'discussion'
     });
 
     const userMsgId = 'msg_u_' + Date.now();
@@ -151,8 +156,8 @@ router.post('/chat', authenticateToken, async (req, res) => {
 
     // Store user message
     await runQuery(`
-      INSERT INTO messages (id, conversation_id, sender, text, detected_lang, marathi_normalized, english_translation, grammar_correction)
-      VALUES (?, ?, 'user', ?, ?, ?, ?, ?)
+      INSERT INTO messages (id, conversation_id, sender, text, detected_lang, marathi_normalized, english_translation, grammar_correction, analysis)
+      VALUES (?, ?, 'user', ?, ?, ?, ?, ?, ?)
     `, [
       userMsgId,
       activeConvId,
@@ -160,7 +165,8 @@ router.post('/chat', authenticateToken, async (req, res) => {
       tutorResult.detectedLang,
       tutorResult.marathiNormalized,
       tutorResult.englishTranslation,
-      tutorResult.grammarCorrection ? JSON.stringify(tutorResult.grammarCorrection) : null
+      tutorResult.grammarCorrection ? JSON.stringify(tutorResult.grammarCorrection) : null,
+      tutorResult.analysis ? JSON.stringify(tutorResult.analysis) : null
     ]);
 
     // Store AI tutor message
@@ -190,6 +196,7 @@ router.post('/chat', authenticateToken, async (req, res) => {
         marathi_normalized: tutorResult.marathiNormalized,
         english_translation: tutorResult.englishTranslation,
         grammar_correction: tutorResult.grammarCorrection,
+        analysis: tutorResult.analysis,
         created_at: new Date().toISOString()
       },
       aiMessage: {
@@ -197,13 +204,77 @@ router.post('/chat', authenticateToken, async (req, res) => {
         sender: 'ai',
         text: tutorResult.aiText,
         detected_lang: 'english',
+        analysis: tutorResult.analysis,
         created_at: new Date().toISOString()
       },
+      analysis: tutorResult.analysis,
       streak: streakResult
     });
   } catch (err) {
     console.error('Error in AI chat route:', err);
     res.status(500).json({ success: false, message: 'Error processing AI chat request.' });
+  }
+});
+
+// Native Language Translation Endpoint (Marathi -> English)
+router.post('/translate', async (req, res) => {
+  try {
+    const { text } = req.body;
+    const result = await translateNativeToEnglish(text);
+    return res.json(result);
+  } catch (err) {
+    console.error('Error in translate route:', err);
+    res.status(500).json({
+      success: false,
+      error: 'SERVICE_UNAVAILABLE',
+      message: 'Translation service is temporarily unavailable. Please try again.'
+    });
+  }
+});
+
+// Get next Marathi practice sentence by level
+router.get('/practice/sentence', authenticateToken, async (req, res) => {
+  try {
+    const level = req.query.level || 'beginner';
+    const excludeId = req.query.excludeId || null;
+    const sentence = getPracticeSentence(level, excludeId);
+
+    res.json({
+      success: true,
+      sentence
+    });
+  } catch (err) {
+    console.error('Error getting practice sentence:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch practice sentence.' });
+  }
+});
+
+// Evaluate user's English translation of a Marathi practice sentence
+router.post('/practice/check', authenticateToken, async (req, res) => {
+  try {
+    const { sentenceId, userEnglish, level } = req.body;
+
+    if (!userEnglish || !userEnglish.trim()) {
+      return res.status(400).json({ success: false, message: 'Translation cannot be empty.' });
+    }
+
+    const evaluation = evaluatePracticeAnswer(sentenceId, userEnglish.trim(), level || 'beginner');
+
+    // Record learning activity for user's streak
+    const streakResult = await recordActivity(
+      req.userId,
+      'practice',
+      `Marathi -> English Practice (${evaluation.isCorrect ? 'Correct' : 'Needs Practice'})`
+    );
+
+    res.json({
+      success: true,
+      ...evaluation,
+      streak: streakResult
+    });
+  } catch (err) {
+    console.error('Error evaluating practice translation:', err);
+    res.status(500).json({ success: false, message: 'Failed to evaluate translation.' });
   }
 });
 

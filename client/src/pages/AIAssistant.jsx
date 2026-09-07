@@ -9,8 +9,6 @@ import robotAvatar from '../assets/speakwise-robot.png';
 import {
   Send,
   Mic,
-  Sparkles,
-  Bot,
   RefreshCw,
   Trash2,
   Radio,
@@ -27,7 +25,6 @@ export const AIAssistant = () => {
   const [isSending, setIsSending] = useState(false);
   const [languageMode, setLanguageMode] = useState('mixed'); // 'english', 'marathi', 'mixed'
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
-
   // Streak celebration state
   const [celebrateStreak, setCelebrateStreak] = useState(null);
 
@@ -172,7 +169,7 @@ export const AIAssistant = () => {
           {
             id: 'err_' + Date.now(),
             sender: 'ai',
-            text: "Sorry, I'm having trouble connecting right now. Please try again in a moment.",
+            text: "Sorry, I couldn't process that message right now. Please try again.",
             created_at: new Date().toISOString()
           }
         ]);
@@ -184,7 +181,7 @@ export const AIAssistant = () => {
         {
           id: 'err_' + Date.now(),
           sender: 'ai',
-          text: "Sorry, I'm having trouble connecting right now. Please try again in a moment.",
+          text: "Sorry, I couldn't process that message right now. Please try again.",
           created_at: new Date().toISOString()
         }
       ]);
@@ -286,8 +283,8 @@ export const AIAssistant = () => {
           </div>
         </div>
 
-        {/* Action Controls & Mode Selector */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        {/* Action Controls */}
+        <div className="flex items-center gap-2 justify-end">
           {/* Hands-free Voice Mode Button */}
           <button
             onClick={() => setIsVoiceModalOpen(true)}
@@ -299,56 +296,27 @@ export const AIAssistant = () => {
             }}
             title="Launch Voice Conversation"
           >
-            <Radio size={14} className="animate-pulse" />
+            <Radio size={13} className="animate-pulse" />
             <span className="hidden sm:inline">Voice Mode</span>
           </button>
-
-          {/* Language Selector Override */}
-          <div className="relative flex items-center gap-1 p-1 rounded-xl border text-xs"
-            style={{
-              backgroundColor: 'var(--bg-card)',
-              borderColor: 'var(--border-main)',
-              color: 'var(--text-muted)'
-            }}
-          >
-            {[
-              { id: 'english', label: '🇬🇧 EN' },
-              { id: 'mixed', label: '🔄 Mixed' },
-              { id: 'marathi', label: '🇮🇳 MR' }
-            ].map((lang) => (
-              <button
-                key={lang.id}
-                onClick={() => setLanguageMode(lang.id)}
-                className={`px-2 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                  languageMode === lang.id ? 'shadow-xs' : 'hover:opacity-80'
-                }`}
-                style={{
-                  background: languageMode === lang.id ? 'var(--accent-gradient)' : 'transparent',
-                  color: languageMode === lang.id ? '#ffffff' : 'var(--text-muted)'
-                }}
-              >
-                {lang.label}
-              </button>
-            ))}
-          </div>
 
           {/* Clear Conversation Button */}
           <button
             onClick={handleClearConversation}
-            className="p-2 rounded-xl border hover:opacity-80 transition cursor-pointer text-red-400 hover:bg-red-500/10"
+            className="p-1.5 sm:p-2 rounded-xl border hover:opacity-80 transition cursor-pointer text-red-400 hover:bg-red-500/10"
             style={{
               backgroundColor: 'var(--bg-card)',
               borderColor: 'var(--border-main)'
             }}
             title="Clear Conversation"
           >
-            <Trash2 size={15} />
+            <Trash2 size={14} />
           </button>
 
           {/* New Chat Button */}
           <button
             onClick={handleStartNewChat}
-            className="p-2 rounded-xl border hover:opacity-80 transition cursor-pointer"
+            className="p-1.5 sm:p-2 rounded-xl border hover:opacity-80 transition cursor-pointer"
             style={{
               backgroundColor: 'var(--bg-card)',
               borderColor: 'var(--border-main)',
@@ -356,7 +324,7 @@ export const AIAssistant = () => {
             }}
             title="New Conversation"
           >
-            <RefreshCw size={15} />
+            <RefreshCw size={14} />
           </button>
         </div>
       </div>
@@ -396,10 +364,10 @@ export const AIAssistant = () => {
 
         {/* AI Typing Indicator */}
         {isSending && (
-          <div className="flex items-center gap-2.5 px-4 py-3 max-w-xs rounded-2xl rounded-bl-xs border text-xs animate-in fade-in"
+          <div className="flex items-center gap-2.5 px-4 py-3 max-w-xs rounded-2xl rounded-bl-xs text-xs animate-in fade-in"
             style={{
               backgroundColor: 'var(--chat-ai)',
-              borderColor: 'var(--border-main)',
+              border: '1.5px solid var(--chat-ai-border)',
               color: 'var(--text-secondary)'
             }}
           >
@@ -448,10 +416,10 @@ export const AIAssistant = () => {
         }}
       >
         <div
-          className="flex items-center gap-2 p-1.5 sm:p-2 rounded-2xl border transition-all duration-200 focus-within:ring-2 focus-within:ring-purple-500/30"
+          className="chat-input-box flex items-center gap-2 p-1.5 sm:p-2 rounded-2xl transition-all duration-200"
           style={{
             backgroundColor: 'var(--bg-input)',
-            borderColor: 'var(--border-main)'
+            border: '1.5px solid var(--chat-input-border)'
           }}
         >
           {/* Animated Microphone Button */}

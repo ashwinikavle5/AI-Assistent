@@ -3,17 +3,29 @@ node_modules/
 client/node_modules/
 server/node_modules/
 
+# Python virtual environments & bytecode (if applicable)
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+
 # Production builds
 dist/
 client/dist/
+build/
 
-# Local databases (don't push your local DB to git)
+# Local databases & storage
 server/data/*.db
 server/data/*.sqlite
 *.db
+*.sqlite
+*.sqlite3
 
 # Environment variables & secrets
 .env
+.env.*
 .env.local
 .env.*.local
 server/.env
@@ -31,3 +43,4 @@ pnpm-debug.log*
 .idea/
 .DS_Store
 Thumbs.db
+scratch/

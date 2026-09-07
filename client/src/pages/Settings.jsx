@@ -1,20 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useAudio } from '../context/AudioContext';
 import { useNavigate } from 'react-router-dom';
 import {
-  Settings as SettingsIcon,
+  User,
+  Mail,
+  Edit3,
+  Check,
+  X,
   Palette,
   GraduationCap,
   Volume2,
-  Bell,
   Lock,
   LogOut,
-  Check,
-  Key,
   Sparkles,
-  Shield
+  Shield,
+  Flame,
+  BookOpen,
+  MessageSquare
 } from 'lucide-react';
 
 export const Settings = () => {
@@ -23,20 +27,88 @@ export const Settings = () => {
   const { playbackSpeed, changeSpeed, autoPlay, setAutoPlay } = useAudio();
   const navigate = useNavigate();
 
-  // Local state for learning settings
+  // Profile Information State
+  const [name, setName] = useState(user?.name || '');
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [profileSaveStatus, setProfileSaveStatus] = useState('');
+
+  // Learning & Voice Preferences State
   const [englishLevel, setEnglishLevel] = useState(user?.english_level || 'intermediate');
   const [dailyGoal, setDailyGoal] = useState(user?.daily_goal_minutes || 15);
   const [preferredLang, setPreferredLang] = useState(user?.preferred_lang || 'mixed');
   const [autoPlayAudio, setAutoPlayAudio] = useState(autoPlay);
   const [practiceSpeed, setPracticeSpeed] = useState(playbackSpeed);
-  const [customApiKey, setCustomApiKey] = useState('');
   const [saveStatus, setSaveStatus] = useState('');
+
+  // Quick stats summary
+  const [stats, setStats] = useState({
+    currentStreak: 0,
+    wordsLearned: 0,
+    aiConversations: 0
+  });
 
   // Password change state
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [passwordStatus, setPasswordStatus] = useState({ type: '', text: '' });
 
+  useEffect(() => {
+    setName(user?.name || '');
+    setEnglishLevel(user?.english_level || 'intermediate');
+    setDailyGoal(user?.daily_goal_minutes || 15);
+    setPreferredLang(user?.preferred_lang || 'mixed');
+  }, [user]);
+
+  useEffect(() => {
+    const fetchQuickStats = async () => {
+      if (!token) return;
+      try {
+        const res = await fetch('/api/progress/stats', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success && data.stats) {
+          setStats({
+            currentStreak: data.stats.currentStreak || 0,
+            wordsLearned: data.stats.wordsLearned || 0,
+            aiConversations: data.stats.aiConversations || 0
+          });
+        }
+      } catch (e) {
+        // Silently handle
+      }
+    };
+    fetchQuickStats();
+  }, [token]);
+
+  // Save Name in Profile Card
+  const handleSaveName = async (e) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+
+    try {
+      const res = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ name: name.trim() })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        updateUser({ name: name.trim() });
+        setIsEditingName(false);
+        setProfileSaveStatus('Name updated successfully!');
+        setTimeout(() => setProfileSaveStatus(''), 3000);
+      }
+    } catch (e) {
+      console.error('Error updating name:', e);
+    }
+  };
+
+  // Save Preferences
   const handleSaveSettings = async () => {
     setSaveStatus('');
     try {
@@ -52,8 +124,7 @@ export const Settings = () => {
           daily_goal_minutes: dailyGoal,
           preferred_lang: preferredLang,
           speech_speed: practiceSpeed,
-          auto_play_audio: autoPlayAudio,
-          api_key: customApiKey.trim() || undefined
+          auto_play_audio: autoPlayAudio
         })
       });
 
@@ -66,7 +137,7 @@ export const Settings = () => {
         });
         setAutoPlay(autoPlayAudio);
         changeSpeed(practiceSpeed);
-        setSaveStatus('Settings saved successfully!');
+        setSaveStatus('Preferences saved successfully!');
         setTimeout(() => setSaveStatus(''), 3000);
       }
     } catch (e) {
@@ -75,6 +146,7 @@ export const Settings = () => {
     }
   };
 
+  // Change Password
   const handleChangePassword = async (e) => {
     e.preventDefault();
     setPasswordStatus({ type: '', text: '' });
@@ -123,14 +195,143 @@ export const Settings = () => {
         }}
       >
         <div className="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold w-fit mb-3" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--accent-primary)' }}>
-          <Sparkles size={14} /> Preferences & Configuration
+          <Sparkles size={14} /> Profile & Settings
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: 'var(--text-main)' }}>
           ⚙️ Settings
         </h1>
         <p className="text-sm font-medium mt-1" style={{ color: 'var(--text-muted)' }}>
-          Customize your learning pace, themes, voice speeds, and account security.
+          Manage your personal profile, appearance, language preferences, and account security.
         </p>
+      </div>
+
+      {/* 1. PROFILE SECTION (Moved into Settings as requested) */}
+      <div
+        className="rounded-3xl p-6 sm:p-8 border shadow-xl space-y-6"
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          borderColor: 'var(--border-main)'
+        }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <User size={18} style={{ color: 'var(--accent-primary)' }} />
+            <h2 className="font-bold text-base" style={{ color: 'var(--text-main)' }}>
+              Profile Information
+            </h2>
+          </div>
+          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/5" style={{ color: 'var(--text-muted)' }}>
+            Personal Account
+          </span>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 pt-1">
+          {/* User Profile Avatar (Distinct initials, NOT the robot mascot) */}
+          <div className="flex flex-col items-center gap-2 shrink-0">
+            <div
+              className="w-20 h-20 rounded-3xl flex items-center justify-center text-3xl font-extrabold text-white shadow-lg"
+              style={{
+                background: 'var(--accent-gradient)',
+                boxShadow: '0 8px 20px var(--accent-glow)'
+              }}
+            >
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>
+              Learner Avatar
+            </span>
+          </div>
+
+          {/* User Details & Editable Name */}
+          <div className="flex-1 w-full space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              {!isEditingName ? (
+                <div>
+                  <h3 className="text-xl font-bold" style={{ color: 'var(--text-main)' }}>
+                    {user?.name || 'English Learner'}
+                  </h3>
+                  <p className="text-xs font-medium flex items-center gap-1.5 mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                    <Mail size={13} />
+                    <span>{user?.email || 'learner@speakwise.ai'}</span>
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleSaveName} className="flex-1 space-y-2">
+                  <label className="block text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                    Your Name
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Enter full name"
+                      className="px-3.5 py-2 rounded-xl border text-xs outline-none flex-1 max-w-sm"
+                      style={{
+                        backgroundColor: 'var(--bg-input)',
+                        borderColor: 'var(--border-main)',
+                        color: 'var(--text-main)'
+                      }}
+                      autoFocus
+                    />
+                    <button
+                      type="submit"
+                      className="px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 transition cursor-pointer flex items-center gap-1"
+                    >
+                      <Check size={14} /> Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingName(false);
+                        setName(user?.name || '');
+                      }}
+                      className="px-3 py-2 rounded-xl border text-xs font-semibold hover:opacity-80 transition cursor-pointer"
+                      style={{ borderColor: 'var(--border-main)', color: 'var(--text-muted)' }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {!isEditingName && (
+                <button
+                  onClick={() => setIsEditingName(true)}
+                  className="px-3.5 py-1.5 rounded-xl border text-xs font-semibold hover:opacity-80 transition cursor-pointer flex items-center gap-1.5 self-start"
+                  style={{
+                    backgroundColor: 'var(--bg-card)',
+                    borderColor: 'var(--border-main)',
+                    color: 'var(--accent-primary)'
+                  }}
+                >
+                  <Edit3 size={13} />
+                  <span>Edit Name</span>
+                </button>
+              )}
+            </div>
+
+            {profileSaveStatus && (
+              <p className="text-xs text-emerald-400 font-semibold">{profileSaveStatus}</p>
+            )}
+
+            {/* Profile Statistics Badges */}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-500/15 text-orange-400 border border-orange-500/30 flex items-center gap-1.5">
+                <Flame size={13} className="text-orange-400 fill-orange-400" />
+                <span>{stats.currentStreak} Day Streak</span>
+              </span>
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30 flex items-center gap-1.5">
+                <MessageSquare size={13} />
+                <span>{stats.aiConversations} Conversations</span>
+              </span>
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 flex items-center gap-1.5">
+                <BookOpen size={13} />
+                <span>{stats.wordsLearned} Words Practiced</span>
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {saveStatus && (
@@ -140,7 +341,7 @@ export const Settings = () => {
         </div>
       )}
 
-      {/* 1. Appearance & Themes */}
+      {/* 2. APPEARANCE & THEMES */}
       <div
         className="rounded-3xl p-6 sm:p-8 border shadow-xl space-y-5"
         style={{
@@ -155,7 +356,7 @@ export const Settings = () => {
           </h2>
         </div>
         <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-          Select from 6 premium responsive themes. Changes apply instantly across the entire interface.
+          Select from 6 responsive themes. Changes apply instantly across the entire interface.
         </p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -177,7 +378,7 @@ export const Settings = () => {
                   <span className="text-2xl">{t.icon}</span>
                   <div>
                     <div className="text-xs font-bold" style={{ color: 'var(--text-main)' }}>{t.name}</div>
-                    <div className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Preset theme</div>
+                    <div className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Theme Preset</div>
                   </div>
                 </div>
                 {active && <Check size={16} style={{ color: 'var(--accent-primary)' }} />}
@@ -187,7 +388,7 @@ export const Settings = () => {
         </div>
       </div>
 
-      {/* 2. Learning Preferences */}
+      {/* 3. LANGUAGE & LEARNING PREFERENCES */}
       <div
         className="rounded-3xl p-6 sm:p-8 border shadow-xl space-y-6"
         style={{
@@ -198,14 +399,14 @@ export const Settings = () => {
         <div className="flex items-center gap-2">
           <GraduationCap size={18} style={{ color: 'var(--accent-primary)' }} />
           <h2 className="font-bold text-base" style={{ color: 'var(--text-main)' }}>
-            Learning Curriculum & Goals
+            Language & Learning Preferences
           </h2>
         </div>
 
-        {/* English Level */}
+        {/* English Learning Level */}
         <div className="space-y-2">
           <label className="block text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
-            Your English Level
+            English Learning Level
           </label>
           <div className="grid grid-cols-3 gap-3">
             {[
@@ -232,35 +433,10 @@ export const Settings = () => {
           </div>
         </div>
 
-        {/* Daily Goal */}
-        <div className="space-y-2">
-          <label className="block text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
-            Daily Practice Goal
-          </label>
-          <div className="grid grid-cols-4 gap-2.5">
-            {[5, 10, 20, 30].map((mins) => (
-              <button
-                key={mins}
-                onClick={() => setDailyGoal(mins)}
-                className={`py-3 rounded-2xl border text-center text-xs font-semibold transition cursor-pointer ${
-                  dailyGoal === mins ? 'ring-2 ring-purple-500 font-bold' : 'hover:opacity-80'
-                }`}
-                style={{
-                  backgroundColor: 'var(--bg-card)',
-                  borderColor: dailyGoal === mins ? 'var(--accent-primary)' : 'var(--border-main)',
-                  color: 'var(--text-main)'
-                }}
-              >
-                {mins} Minutes
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Language Mode */}
         <div className="space-y-2">
           <label className="block text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
-            Language Assistance Mode
+            Preferred Language Mode
           </label>
           <div className="grid grid-cols-3 gap-3">
             {[
@@ -285,9 +461,42 @@ export const Settings = () => {
             ))}
           </div>
         </div>
+
+        {/* Daily Practice Goal */}
+        <div className="space-y-2">
+          <label className="block text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+            Daily Practice Target
+          </label>
+          <div className="grid grid-cols-4 gap-2.5">
+            {[5, 10, 20, 30].map((mins) => (
+              <button
+                key={mins}
+                onClick={() => setDailyGoal(mins)}
+                className={`py-3 rounded-2xl border text-center text-xs font-semibold transition cursor-pointer ${
+                  dailyGoal === mins ? 'ring-2 ring-purple-500 font-bold' : 'hover:opacity-80'
+                }`}
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  borderColor: dailyGoal === mins ? 'var(--accent-primary)' : 'var(--border-main)',
+                  color: 'var(--text-main)'
+                }}
+              >
+                {mins} Minutes
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button
+          onClick={handleSaveSettings}
+          className="px-6 py-3 rounded-2xl text-white font-semibold text-xs shadow-md transition hover:scale-105 cursor-pointer"
+          style={{ background: 'var(--accent-gradient)' }}
+        >
+          Save Learning Preferences
+        </button>
       </div>
 
-      {/* 3. Voice & Speech Settings */}
+      {/* 4. VOICE & SPEECH SETTINGS */}
       <div
         className="rounded-3xl p-6 sm:p-8 border shadow-xl space-y-5"
         style={{
@@ -302,7 +511,7 @@ export const Settings = () => {
           </h2>
         </div>
 
-        {/* Playback Speed */}
+        {/* Speech Speed */}
         <div className="space-y-2">
           <label className="block text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
             Default AI Speech Speed
@@ -338,7 +547,7 @@ export const Settings = () => {
               Auto-play AI Responses Aloud
             </div>
             <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-              Automatically read new AI tutor chat messages using text-to-speech.
+              Automatically read new AI tutor chat messages aloud using speech synthesis.
             </p>
           </div>
           <input
@@ -354,11 +563,11 @@ export const Settings = () => {
           className="px-6 py-3 rounded-2xl text-white font-semibold text-xs shadow-md transition hover:scale-105 cursor-pointer"
           style={{ background: 'var(--accent-gradient)' }}
         >
-          Save Preferences
+          Save Voice Settings
         </button>
       </div>
 
-      {/* 4. Security & Account Management */}
+      {/* 5. ACCOUNT SECURITY & LOGOUT */}
       <div
         className="rounded-3xl p-6 sm:p-8 border shadow-xl space-y-6"
         style={{
@@ -433,7 +642,7 @@ export const Settings = () => {
           <div>
             <div className="text-xs font-bold text-red-400">Log Out of Session</div>
             <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-              End your active session on this browser.
+              End your active session on this device.
             </p>
           </div>
           <button

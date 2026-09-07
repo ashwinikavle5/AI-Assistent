@@ -1,454 +1,399 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useAudio } from '../context/AudioContext';
-import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
-import { StreakCelebration } from '../components/streak/StreakCelebration';
 import {
   Volume2,
-  Mic,
   Search,
-  Turtle,
-  Sparkles,
-  CheckCircle2,
+  Check,
   AlertCircle,
-  BookOpen,
-  ArrowRight,
-  History
+  HelpCircle
 } from 'lucide-react';
+
+const PRACTICE_WORDS = [
+  'beautiful',
+  'confidence',
+  'pronunciation',
+  'comfortable',
+  'opportunity',
+  'education',
+  'development',
+  'difficult'
+];
 
 export const Pronunciation = () => {
   const { token } = useAuth();
   const { speak } = useAudio();
 
-  const [inputWord, setInputWord] = useState('');
+  const [inputWord, setInputWord] = useState('beautiful');
   const [loading, setLoading] = useState(false);
-  const [wordDetails, setWordDetails] = useState(null);
-  const [error, setError] = useState('');
-  const [practiceFeedback, setPracticeFeedback] = useState(null);
-  const [history, setHistory] = useState([]);
-  const [celebrateStreak, setCelebrateStreak] = useState(null);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [misspellingData, setMisspellingData] = useState(null);
+  const [learningData, setLearningData] = useState(null);
 
-  // Speech recognition for user practice
-  const { isListening, transcript, isSupported, startListening, stopListening } = useSpeechRecognition({
-    onResult: (spokenText, isFinal) => {
-      if (isFinal && wordDetails) {
-        submitPracticeAttempt(spokenText.trim());
-      }
+  // Perform pronunciation lookup
+  const handleLookup = async (wordToSearch) => {
+    const target = (wordToSearch !== undefined ? wordToSearch : inputWord).trim();
+
+    setErrorMsg('');
+    setMisspellingData(null);
+
+    // Empty input validation
+    if (!target) {
+      setErrorMsg('Please enter an English word.');
+      setLearningData(null);
+      return;
     }
-  });
-
-  // Load default featured word on mount
-  useEffect(() => {
-    lookupWord('beautiful');
-    fetchHistory();
-  }, []);
-
-  const fetchHistory = async () => {
-    if (!token) return;
-    try {
-      const res = await fetch('/api/pronunciation/history', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success && data.history) {
-        setHistory(data.history);
-      }
-    } catch (e) {
-      console.warn('Failed to load pronunciation history:', e);
-    }
-  };
-
-  const lookupWord = async (wordToSearch) => {
-    const word = (wordToSearch || inputWord).trim();
-    if (!word) return;
 
     setLoading(true);
-    setError('');
-    setPracticeFeedback(null);
 
     try {
-      const res = await fetch(`/api/pronunciation/lookup?word=${encodeURIComponent(word)}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const response = await fetch(`/api/pronunciation/lookup?word=${encodeURIComponent(target)}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
-      const data = await res.json();
 
-      if (res.ok && data.success && data.details) {
-        setWordDetails(data.details);
-        setInputWord('');
+      if (!response.ok) {
+        setErrorMsg('Unable to check the word right now. Please try again.');
+        setLearningData(null);
+        return;
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.details) {
+        setLearningData(data.details);
+        setInputWord(data.details.word);
+        setErrorMsg('');
+        setMisspellingData(null);
+      } else if (data.isMisspelled) {
+        // Misspelled word -> ask user for confirmation
+        setMisspellingData({
+          enteredWord: data.enteredWord || target,
+          suggestedWord: data.suggestedWord
+        });
+        setLearningData(null);
+        setErrorMsg('');
+      } else if (data.error === 'EMPTY_INPUT') {
+        setErrorMsg('Please enter an English word.');
+        setLearningData(null);
+        setMisspellingData(null);
+      } else if (data.error === 'SERVICE_UNAVAILABLE') {
+        setErrorMsg('Word information is temporarily unavailable. Please try again.');
+        setLearningData(null);
+        setMisspellingData(null);
       } else {
-        setError(data.message || `Could not find "${word}". Please check spelling and try again.`);
+        // Genuine unrecognized word
+        setErrorMsg('Word not found. Please enter a valid English word.');
+        setLearningData(null);
+        setMisspellingData(null);
       }
     } catch (err) {
-      setError('Network error looking up word. Please try again.');
+      console.error('Error checking word pronunciation:', err);
+      setErrorMsg('Word information is temporarily unavailable. Please try again.');
+      setLearningData(null);
+      setMisspellingData(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePlayNormal = () => {
-    if (wordDetails) {
-      speak(wordDetails.word, 'pron_normal', 1.0);
-    }
-  };
+  // Load default word on mount
+  useEffect(() => {
+    handleLookup('beautiful');
+  }, []);
 
-  const handlePlaySlow = () => {
-    if (wordDetails) {
-      speak(wordDetails.word, 'pron_slow', 0.7);
-    }
-  };
-
-  const handleStartPractice = () => {
-    setPracticeFeedback(null);
-    startListening('en-US');
-  };
-
-  const submitPracticeAttempt = async (spokenTranscript) => {
-    if (!wordDetails) return;
+  // Listen to English pronunciation (Speaks ONLY the English word)
+  const handleListen = () => {
+    const wordToPronounce = learningData?.word || inputWord.trim();
+    if (!wordToPronounce) return;
 
     try {
-      const res = await fetch('/api/pronunciation/practice', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          word: wordDetails.word,
-          transcript: spokenTranscript,
-          ipa: wordDetails.ipa
-        })
-      });
-
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setPracticeFeedback({
-          isMatch: data.isMatch,
-          transcript: data.detectedTranscript,
-          feedback: data.feedback
-        });
-
-        // Trigger streak celebration if streak increased
-        if (data.streak && data.streak.streakIncreased) {
-          setCelebrateStreak(data.streak.currentStreak);
-        }
-
-        fetchHistory();
-      }
+      speak(wordToPronounce, 'pron_' + wordToPronounce.toLowerCase() + '_' + Date.now(), 0.95);
     } catch (err) {
-      console.error('Practice attempt submit error:', err);
+      console.error('TTS speech error:', err);
+      setErrorMsg('Speech audio playback is currently unavailable.');
     }
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-200">
-      {/* Header Banner */}
+    <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-300">
+      {/* Header */}
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center p-1.5 shadow-xs shrink-0"
+            style={{ background: 'var(--accent-gradient)', color: '#fff' }}
+          >
+            <Volume2 size={18} aria-hidden="true" />
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight" style={{ color: 'var(--text-main)' }}>
+            Pronunciation Learning
+          </h1>
+        </div>
+        <p className="text-xs sm:text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
+          Enter any English word and learn its meaning and pronunciation.
+        </p>
+      </div>
+
+      {/* Main Pronunciation Search Box UI */}
       <div
-        className="rounded-3xl p-6 sm:p-8 border shadow-lg relative overflow-hidden"
+        className="rounded-3xl border shadow-xl p-5 sm:p-7 space-y-6"
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-main)'
         }}
       >
-        <div className="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold w-fit mb-3" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--accent-primary)' }}>
-          <Sparkles size={14} /> Speech Articulation & Phonics
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: 'var(--text-main)' }}>
-          🔊 Pronunciation Coach
-        </h1>
-        <p className="text-sm font-medium mt-1 max-w-xl" style={{ color: 'var(--text-muted)' }}>
-          Listen to standard English articulation, slow down difficult phonemes, and practice speaking words aloud.
-        </p>
-
-        {/* Word Search Input */}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            lookupWord();
-          }}
-          className="mt-6 flex flex-col sm:flex-row gap-3 max-w-2xl"
-        >
+        <div className="space-y-2">
           <div
-            className="flex-1 flex items-center gap-3 px-4 py-3.5 rounded-2xl border transition-all duration-200 focus-within:ring-2 focus-within:ring-purple-500/30"
+            className="flex flex-col sm:flex-row gap-2.5 p-2 rounded-2xl border"
             style={{
               backgroundColor: 'var(--bg-input)',
               borderColor: 'var(--border-main)'
             }}
           >
-            <Search size={18} style={{ color: 'var(--text-muted)' }} />
-            <input
-              type="text"
-              value={inputWord}
-              onChange={(e) => setInputWord(e.target.value)}
-              placeholder="Enter an English word (e.g. Beautiful, Confident, Comfortable)..."
-              className="w-full bg-transparent border-none outline-none text-sm"
-              style={{ color: 'var(--text-main)' }}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-6 py-3.5 rounded-2xl text-white font-semibold text-sm transition-all duration-200 shadow-md flex items-center justify-center gap-2 cursor-pointer hover:opacity-95 disabled:opacity-50"
-            style={{
-              background: 'var(--accent-gradient)',
-              boxShadow: '0 8px 20px var(--accent-glow)'
-            }}
-          >
-            {loading ? (
-              <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
-            ) : (
-              <>
-                <Volume2 size={16} />
-                <span>Pronounce</span>
-              </>
-            )}
-          </button>
-        </form>
-
-        {error && (
-          <div className="mt-3 text-xs text-red-400 flex items-center gap-1.5">
-            <AlertCircle size={14} />
-            <span>{error}</span>
-          </div>
-        )}
-      </div>
-
-      {/* Main Pronunciation Result Card */}
-      {wordDetails && (
-        <div
-          className="rounded-3xl p-6 sm:p-8 border shadow-xl space-y-6"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            borderColor: 'var(--border-main)'
-          }}
-        >
-          {/* Word Heading, Badges, & Phonetics */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b" style={{ borderColor: 'var(--border-main)' }}>
-            <div>
-              <div className="flex items-center gap-3">
-                <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-wider" style={{ color: 'var(--text-main)' }}>
-                  {wordDetails.word}
-                </h2>
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30">
-                  {wordDetails.partOfSpeech}
-                </span>
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
-                  {wordDetails.difficulty}
-                </span>
-              </div>
-
-              {/* IPA & Phonetic Learner Display */}
-              <div className="mt-2 flex items-center gap-4 text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>
-                <span className="font-semibold text-purple-400">{wordDetails.ipa}</span>
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>•</span>
-                <span className="font-medium text-cyan-400">{wordDetails.phoneticLearner}</span>
-              </div>
-            </div>
-
-            {/* Audio & Practice Buttons */}
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Normal Listen */}
-              <button
-                onClick={handlePlayNormal}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-white font-semibold text-xs transition shadow-md hover:scale-105 cursor-pointer"
-                style={{ background: 'var(--accent-gradient)' }}
-              >
-                <Volume2 size={16} />
-                <span>Listen</span>
-              </button>
-
-              {/* Slow Listen */}
-              <button
-                onClick={handlePlaySlow}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border text-xs font-semibold hover:bg-white/5 transition hover:scale-105 cursor-pointer"
-                style={{
-                  backgroundColor: 'var(--bg-card)',
-                  borderColor: 'var(--border-main)',
-                  color: 'var(--text-main)'
+            <div className="flex-1 flex items-center gap-2 px-2">
+              <Search size={16} style={{ color: 'var(--text-muted)' }} aria-hidden="true" />
+              <input
+                type="text"
+                value={inputWord}
+                onChange={(e) => {
+                  setInputWord(e.target.value);
+                  if (errorMsg) setErrorMsg('');
+                  if (misspellingData) setMisspellingData(null);
                 }}
-                title="Listen at 0.75x speed"
-              >
-                <Turtle size={16} className="text-amber-400" />
-                <span>Slow (0.75x)</span>
-              </button>
-
-              {/* Microphone Practice */}
-              <button
-                onClick={handleStartPractice}
-                disabled={isListening}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-white font-semibold text-xs transition shadow-md cursor-pointer ${
-                  isListening ? 'bg-red-500 mic-active' : 'bg-emerald-600 hover:bg-emerald-500 hover:scale-105'
-                }`}
-              >
-                <Mic size={16} className={isListening ? 'animate-pulse' : ''} />
-                <span>{isListening ? 'Listening...' : 'Practice Speaking'}</span>
-              </button>
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleLookup();
+                  }
+                }}
+                placeholder="Enter an English word..."
+                className="w-full bg-transparent border-none outline-none text-sm font-medium"
+                style={{ color: 'var(--text-main)' }}
+              />
             </div>
-          </div>
 
-          {/* Listening Indicator when practicing */}
-          {isListening && (
-            <div className="p-4 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs flex items-center justify-between animate-pulse">
-              <div className="flex items-center gap-2 font-semibold">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
-                <span>Say "{wordDetails.word}" clearly into your microphone...</span>
-              </div>
-              <button
-                onClick={stopListening}
-                className="font-bold underline cursor-pointer"
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-
-          {/* Truthful Practice Feedback Box */}
-          {practiceFeedback && (
-            <div
-              className={`p-5 rounded-2xl border text-xs animate-in fade-in ${
-                practiceFeedback.isMatch
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                  : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
-              }`}
+            {/* Check Button */}
+            <button
+              type="button"
+              onClick={() => handleLookup()}
+              disabled={loading}
+              className="flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl text-xs font-bold text-white shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50 hover:opacity-95 shrink-0"
+              style={{
+                background: 'var(--accent-gradient)',
+                boxShadow: inputWord.trim() ? '0 4px 14px var(--accent-glow)' : 'none'
+              }}
             >
-              <div className="flex items-center gap-2 font-bold text-sm mb-1">
-                {practiceFeedback.isMatch ? (
-                  <CheckCircle2 size={18} className="text-emerald-400" />
-                ) : (
-                  <AlertCircle size={18} className="text-amber-400" />
-                )}
-                <span>{practiceFeedback.isMatch ? 'Great Pronunciation!' : 'Keep Practicing!'}</span>
-              </div>
-              <p className="mt-1 leading-relaxed text-xs">
-                {practiceFeedback.feedback}
-              </p>
-            </div>
-          )}
-
-          {/* Meaning & Examples */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-            {/* Meaning */}
-            <div className="space-y-2 p-4 rounded-2xl border" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-main)' }}>
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                <BookOpen size={14} style={{ color: 'var(--accent-primary)' }} />
-                <span>Meaning</span>
-              </div>
-              <p className="text-sm leading-relaxed font-medium" style={{ color: 'var(--text-main)' }}>
-                {wordDetails.meaning}
-              </p>
-            </div>
-
-            {/* Example Sentence */}
-            <div className="space-y-2 p-4 rounded-2xl border" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-main)' }}>
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                <Sparkles size={14} className="text-amber-400" />
-                <span>Example Sentence</span>
-              </div>
-              <p className="text-sm italic leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                "{wordDetails.example}"
-              </p>
-            </div>
-          </div>
-
-          {/* Synonyms & Antonyms */}
-          <div className="flex flex-wrap gap-6 pt-2">
-            {wordDetails.synonyms?.length > 0 && (
-              <div className="space-y-2">
-                <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
-                  Synonyms:
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {wordDetails.synonyms.map((syn, i) => (
-                    <button
-                      key={i}
-                      onClick={() => lookupWord(syn)}
-                      className="px-2.5 py-1 rounded-xl text-xs font-medium border hover:opacity-80 transition cursor-pointer"
-                      style={{
-                        backgroundColor: 'var(--bg-card)',
-                        borderColor: 'var(--border-main)',
-                        color: 'var(--accent-primary)'
-                      }}
-                    >
-                      {syn}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {wordDetails.antonyms?.length > 0 && (
-              <div className="space-y-2">
-                <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
-                  Antonyms:
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {wordDetails.antonyms.map((ant, i) => (
-                    <button
-                      key={i}
-                      onClick={() => lookupWord(ant)}
-                      className="px-2.5 py-1 rounded-xl text-xs font-medium border hover:opacity-80 transition cursor-pointer text-red-400"
-                      style={{
-                        backgroundColor: 'var(--bg-card)',
-                        borderColor: 'var(--border-main)'
-                      }}
-                    >
-                      {ant}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+              <Search size={15} aria-hidden="true" />
+              <span>{loading ? 'Checking...' : 'Check'}</span>
+            </button>
           </div>
         </div>
-      )}
 
-      {/* Practice Word History */}
-      {history.length > 0 && (
-        <div
-          className="rounded-3xl p-6 border shadow-sm space-y-4"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            borderColor: 'var(--border-main)'
-          }}
-        >
-          <div className="flex items-center gap-2">
-            <History size={16} style={{ color: 'var(--accent-primary)' }} />
-            <h3 className="font-bold text-sm" style={{ color: 'var(--text-main)' }}>
-              Recently Practiced Words
-            </h3>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {history.map((item) => (
+        {/* Practice Words Chips */}
+        <div className="space-y-1.5">
+          <span className="text-[11px] font-semibold" style={{ color: 'var(--text-muted)' }}>
+            Practice Words:
+          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            {PRACTICE_WORDS.map((word) => (
               <button
-                key={item.id}
-                onClick={() => lookupWord(item.word)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition hover:scale-105 cursor-pointer"
+                key={word}
+                type="button"
+                onClick={() => {
+                  setInputWord(word);
+                  handleLookup(word);
+                }}
+                className={`text-xs px-3 py-1.5 rounded-xl border transition-all duration-150 cursor-pointer font-medium ${
+                  learningData?.word?.toLowerCase() === word.toLowerCase()
+                    ? 'ring-1 ring-purple-500 font-bold'
+                    : 'hover:scale-102'
+                }`}
                 style={{
-                  backgroundColor: 'var(--bg-card)',
-                  borderColor: item.is_match ? 'rgba(16, 185, 129, 0.4)' : 'var(--border-main)',
-                  color: 'var(--text-main)'
+                  backgroundColor:
+                    learningData?.word?.toLowerCase() === word.toLowerCase()
+                      ? 'rgba(168, 85, 247, 0.15)'
+                      : 'var(--bg-card)',
+                  borderColor:
+                    learningData?.word?.toLowerCase() === word.toLowerCase()
+                      ? 'rgb(168, 85, 247)'
+                      : 'var(--border-main)',
+                  color:
+                    learningData?.word?.toLowerCase() === word.toLowerCase()
+                      ? 'var(--accent-primary)'
+                      : 'var(--text-secondary)'
                 }}
               >
-                <span>{item.word}</span>
-                {item.is_match ? (
-                  <CheckCircle2 size={13} className="text-emerald-400" />
-                ) : (
-                  <span className="text-[10px] text-amber-400">practiced</span>
-                )}
+                {word}
               </button>
             ))}
           </div>
         </div>
-      )}
 
-      {/* Streak Extended Celebration Modal */}
-      {celebrateStreak !== null && (
-        <StreakCelebration
-          streakDays={celebrateStreak}
-          onClose={() => setCelebrateStreak(null)}
-        />
-      )}
+        {/* Error Notification Banner */}
+        {errorMsg && (
+          <div className="p-4 rounded-2xl border bg-red-500/10 border-red-500/30 text-red-400 flex items-start gap-3 animate-in fade-in">
+            <AlertCircle size={18} className="shrink-0 mt-0.5" aria-hidden="true" />
+            <div>
+              <p className="text-xs sm:text-sm font-semibold">{errorMsg}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Misspelling Confirmation Banner */}
+        {misspellingData && (
+          <div
+            className="p-4 sm:p-5 rounded-2xl border animate-in fade-in space-y-3"
+            style={{
+              backgroundColor: 'rgba(234, 179, 8, 0.08)',
+              borderColor: 'rgba(234, 179, 8, 0.35)'
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <HelpCircle size={20} className="text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
+              <div className="space-y-1">
+                <p className="text-xs sm:text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  I couldn't recognize this word.
+                </p>
+                <p className="text-xs sm:text-sm font-semibold" style={{ color: 'var(--text-main)' }}>
+                  Did you mean <span className="font-bold text-amber-300">"{misspellingData.suggestedWord}"</span>?
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1 pl-8">
+              <button
+                type="button"
+                onClick={() => {
+                  const targetWord = misspellingData.suggestedWord;
+                  setInputWord(targetWord);
+                  setMisspellingData(null);
+                  handleLookup(targetWord);
+                }}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-xs hover:opacity-95 transition cursor-pointer"
+                style={{ background: 'var(--accent-gradient)' }}
+              >
+                <Check size={14} aria-hidden="true" />
+                <span>Use "{misspellingData.suggestedWord}"</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMisspellingData(null)}
+                className="px-3 py-2 rounded-xl border text-xs font-semibold hover:opacity-80 transition cursor-pointer"
+                style={{
+                  backgroundColor: 'var(--bg-surface)',
+                  borderColor: 'var(--border-main)',
+                  color: 'var(--text-muted)'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Pronunciation Learning Result Card */}
+        {learningData && (
+          <div
+            className="rounded-3xl border p-5 sm:p-7 space-y-5 shadow-sm animate-in fade-in duration-200"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-main)'
+            }}
+          >
+            {/* Word Heading & Listen Button */}
+            <div
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4"
+              style={{ borderColor: 'var(--border-main)' }}
+            >
+              <div className="flex items-center gap-3 flex-wrap">
+                <h2
+                  className="text-2xl sm:text-3xl font-extrabold tracking-tight capitalize"
+                  style={{ color: 'var(--text-main)' }}
+                >
+                  {learningData.word}
+                </h2>
+                {learningData.partOfSpeech && (
+                  <span
+                    className="px-2.5 py-0.5 rounded-full text-xs font-bold border capitalize"
+                    style={{
+                      backgroundColor: 'rgba(168, 85, 247, 0.12)',
+                      borderColor: 'rgba(168, 85, 247, 0.3)',
+                      color: 'var(--accent-primary)'
+                    }}
+                  >
+                    Part of Speech: {learningData.partOfSpeech}
+                  </span>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleListen}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white transition-all duration-200 cursor-pointer hover:opacity-95 shadow-md w-fit"
+                style={{
+                  background: 'var(--accent-gradient)',
+                  boxShadow: '0 4px 12px var(--accent-glow)'
+                }}
+                title={`Listen to pronunciation of ${learningData.word}`}
+              >
+                <Volume2 size={16} aria-hidden="true" />
+                <span>🔊 Listen</span>
+              </button>
+            </div>
+
+            {/* Marathi Meaning */}
+            <div
+              className="p-4 rounded-2xl border space-y-1"
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                borderColor: 'var(--border-main)'
+              }}
+            >
+              <span className="text-xs font-bold block" style={{ color: 'var(--accent-primary)' }}>
+                मराठी अर्थ:
+              </span>
+              <p className="text-lg sm:text-xl font-bold" style={{ color: 'var(--text-main)' }}>
+                {learningData.marathiMeaning}
+              </p>
+            </div>
+
+            {/* Simple Meaning */}
+            <div
+              className="p-4 rounded-2xl border space-y-1"
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                borderColor: 'var(--border-main)'
+              }}
+            >
+              <span className="text-xs font-bold block text-blue-400">
+                Simple Meaning:
+              </span>
+              <p className="text-xs sm:text-sm font-medium leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                {learningData.simpleEnglishMeaning}
+              </p>
+            </div>
+
+            {/* Example Sentence */}
+            <div
+              className="p-4 rounded-2xl border space-y-1"
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                borderColor: 'var(--border-main)'
+              }}
+            >
+              <span className="text-xs font-bold block text-emerald-400">
+                Example:
+              </span>
+              <p className="text-xs sm:text-sm font-medium italic leading-relaxed" style={{ color: 'var(--text-main)' }}>
+                "{learningData.example.replace(/^["']|["']$/g, '')}"
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
+
+export default Pronunciation;

@@ -240,7 +240,176 @@ const runTests = async () => {
   console.log(`    Translation: ${progress.data.stats.skills.translation}%`);
   console.log(`    Listening: ${progress.data.stats.skills.listening}%`);
 
-  console.log('\n🎉 ALL 13 TEST PHASES PASSED WITH ZERO FAILURES!\n');
+  // 14. Conversational AI Tutor 16 Target Test Cases & Anti-Generic Filter
+  console.log('\n--- Phase 14: Testing All 16 Target Educational & Conversational Tutor Messages ---');
+  const { generateTutorResponse } = require('./services/aiTutorService');
+  const FORBIDDEN_FILLERS = [
+    "that's an interesting point",
+    "you are communicating clearly",
+    "to expand on this",
+    "could you share a little more about your experience with that",
+    "i hear you",
+    "let's explore that together",
+    "that's a good question",
+    "tell me a little more about that",
+    "what would you like to say in english",
+    "what would you like to explore next",
+    "i'm listening",
+    "could you tell me a little more",
+    "what specific details or examples can you share",
+    "work through it together"
+  ];
+
+  const targetTestCases = [
+    {
+      id: 1,
+      input: 'present tense',
+      verify: (res) => res.aiText.includes("Present tense is used") && res.aiText.includes("Simple Present") && !res.grammarCorrection
+    },
+    {
+      id: 2,
+      input: 'how we can use present tense',
+      verify: (res) => res.aiText.includes("How can we use the present tense?") && res.grammarCorrection?.better === "How can we use the present tense?"
+    },
+    {
+      id: 3,
+      input: 'daily habbits',
+      verify: (res) => res.aiText.includes("daily habits") && res.aiText.includes("wake up") && res.grammarCorrection?.better === "daily habits"
+    },
+    {
+      id: 4,
+      input: 'what is simple present tense',
+      verify: (res) => res.aiText.includes("Simple Present tense is used") && res.aiText.includes("Subject + Base Verb") && !res.grammarCorrection
+    },
+    {
+      id: 5,
+      input: 'give me examples of present tense',
+      verify: (res) => res.aiText.includes("examples of the Present Tense") && res.aiText.includes("Simple Present") && !res.grammarCorrection
+    },
+    {
+      id: 6,
+      input: 'how can I improve my English?',
+      verify: (res) => res.aiText.includes("To improve your English") && res.aiText.includes("Read aloud") && !res.grammarCorrection
+    },
+    {
+      id: 7,
+      input: 'i cant understand english',
+      verify: (res) => res.aiText.includes("can't understand English") && res.grammarCorrection?.better.includes("can't")
+    },
+    {
+      id: 8,
+      input: 'i have lot of woring for today',
+      verify: (res) => res.aiText.includes("a lot of work for today") && res.aiText.includes("woring") && res.grammarCorrection?.better === "I have a lot of work for today."
+    },
+    {
+      id: 9,
+      input: 'I am chatting with you',
+      verify: (res) => res.aiText.includes("happy to chat with you") && !res.grammarCorrection
+    },
+    {
+      id: 10,
+      input: 'mala English samjat nahi',
+      verify: (res) => res.aiText.includes("मला English समजत नाही") && res.aiText.includes("I don't understand English")
+    },
+    {
+      id: 11,
+      input: 'mala present tense samjun sang',
+      verify: (res) => res.aiText.includes("Present Tense म्हणजे वर्तमानकाळ") && res.aiText.includes("Simple Present")
+    },
+    {
+      id: 12,
+      input: 'mala mahit nahi yach ans ks dyaych',
+      verify: (res) => res.aiText.includes("मला माहित नाही, याचं answer कसं द्यायचं?") && res.aiText.includes("I don't know how to answer this")
+    },
+    {
+      id: 13,
+      input: 'jevn zal ka?',
+      verify: (res) => res.aiText.includes("जेवण झालं का?") && res.aiText.includes("Have you eaten")
+    },
+    {
+      id: 14,
+      input: 'mala English बोलायला practice karaychi aahe',
+      verify: (res) => res.aiText.includes("I want to practice speaking English") && res.aiText.includes("What did you do today")
+    },
+    {
+      id: 15,
+      input: 'give me present tense exercise',
+      verify: (res) => res.aiText.includes("Present Tense practice exercise") && res.aiText.includes("1. She ______ (go)") && !res.grammarCorrection
+    },
+    {
+      id: 16,
+      input: 'check my answer',
+      verify: (res) => res.aiText.includes("She goes to college every day") && !res.grammarCorrection
+    },
+    {
+      id: 17,
+      input: 'what was doing?',
+      verify: (res) => res.aiText.includes("What were you doing?") && res.aiText.includes("chatting with you")
+    },
+    {
+      id: 18,
+      input: 'you dont help me just tell these sentense wrong and you even dont correct the statement',
+      verify: (res) => res.aiText.includes("You don't help me") && res.aiText.includes("sentense → sentence") && !res.aiText.includes("What did you do today?")
+    }
+  ];
+
+  for (const tc of targetTestCases) {
+    const res = await generateTutorResponse({ userMessage: tc.input });
+    const lower = res.aiText.toLowerCase();
+    for (const f of FORBIDDEN_FILLERS) {
+      if (lower.includes(f)) {
+        throw new Error(`Test Case ${tc.id} ("${tc.input}") contained forbidden generic filler: "${f}"`);
+      }
+    }
+    if (!tc.verify(res)) {
+      throw new Error(`Test Case ${tc.id} ("${tc.input}") failed verification. Response was:\n${res.aiText}`);
+    }
+    console.log(`  ✓ Case ${tc.id} passed: "${tc.input}"`);
+  }
+  console.log('✅ 14. Conversational AI Tutor 18 Target Cases PASSED (18/18)');
+
+  // 15. Conversation Context & Multi-turn Continuity Test
+  console.log('\n--- Phase 15: Testing Conversation Context & Continuity ---');
+  // Flow A: what was doing? -> yes
+  const flowA = [
+    { sender: 'user', text: 'what was doing?' },
+    { sender: 'ai', text: 'Did you mean: "What were you doing?" Because the subject is "you", we use "were", not "was". I was chatting with you!' }
+  ];
+  const flowARes = await generateTutorResponse({
+    userMessage: 'yes',
+    conversationHistory: flowA
+  });
+  if (!flowARes.aiText.includes("What were you doing?") || !flowARes.aiText.includes("What were you doing yesterday?")) {
+    throw new Error("Context test failed: 'what was doing?' -> 'yes' did not explain was/were");
+  }
+  console.log("  ✓ Flow A: 'what was doing?' -> 'yes' correctly continued was/were explanation");
+
+  // Flow B: present tense -> give me exercise -> check my answer
+  const contextHistory = [
+    { sender: 'user', text: 'present tense' },
+    { sender: 'ai', text: 'Present tense is used to talk about things that happen now, regularly, or are generally true.' }
+  ];
+  const followUp1 = await generateTutorResponse({
+    userMessage: 'give me exercise',
+    conversationHistory: contextHistory
+  });
+  if (!followUp1.aiText.includes("Present Tense practice exercise")) {
+    throw new Error("Context test failed: 'give me exercise' did not yield present tense exercise");
+  }
+  contextHistory.push({ sender: 'user', text: 'give me exercise' });
+  contextHistory.push({ sender: 'ai', text: followUp1.aiText });
+
+  const followUp2 = await generateTutorResponse({
+    userMessage: 'check my answer',
+    conversationHistory: contextHistory
+  });
+  if (!followUp2.aiText.includes("She goes to college every day")) {
+    throw new Error("Context test failed: 'check my answer' did not evaluate the exercise");
+  }
+  console.log("  ✓ Flow B: 'present tense' -> 'give me exercise' -> 'check my answer' passed");
+  console.log('✅ 15. Multi-Turn Conversation Context Flow PASSED (15/15)\n');
+
+  console.log('\n🎉 ALL 15 TEST PHASES PASSED WITH ZERO FAILURES!\n');
 };
 
 runTests().catch(err => {

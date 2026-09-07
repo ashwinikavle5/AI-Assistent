@@ -12,7 +12,7 @@ This guide provides step-by-step instructions specifically written for hosting t
 | **Backend** | Express 4 | Modular REST API, static asset caching, SPA fallback |
 | **Frontend** | React 19 + Vite | Tailwind CSS 4, Lucide Icons, Canvas Confetti |
 | **Database** | SQLite3 (`sqlite3`) | Persistent file database (`server/data/speakwise.db` or custom `DATABASE_PATH`) |
-| **AI Engine** | Built-in Intent Engine & Roman Marathi NLP | Offline-first with optional Google Gemini / OpenAI integration |
+| **Translation & Learning** | Built-in Marathi Translation, Phonetic Pronunciation & Grammar Engine | Fast offline-first with optional Google Gemini integration |
 
 ---
 
@@ -61,37 +61,60 @@ Configure these environment variables in your hosting dashboard under **Environm
 
 ---
 
-## 5. Deployment Options
+## 5. Render Deployment Guide (10 Steps)
 
-### Option A: Deploy via Render Web Service (Recommended)
+Follow these exact 10 steps to host your live website on Render:
 
-1. Go to the **Render Dashboard** $\rightarrow$ Click **New +** $\rightarrow$ Select **Web Service**.
-2. Select your repository: `speakwise-ai`.
-3. Fill in the service details:
-   - **Name**: `speakwise-ai`
-   - **Region**: Closest to your users (e.g., *Oregon (US West)*, *Frankfurt (EU)*, or *Singapore (Asia)*)
-   - **Branch**: `main`
-   - **Root Directory**: *(Leave empty to use root)*
-   - **Runtime**: `Node`
-   - **Build Command**:
+1. **Create GitHub Repository**:
+   - Go to [GitHub.com](https://github.com) and create a new repository named `speakwise-ai` (Public or Private).
+
+2. **Upload Project**:
+   - Push your SpeakWise AI code to GitHub:
+     ```bash
+     git add .
+     git commit -m "feat: prepare SpeakWise AI for Render deployment"
+     git branch -M main
+     git remote add origin https://github.com/<your-username>/speakwise-ai.git
+     git push -u origin main
+     ```
+
+3. **Connect GitHub to Render**:
+   - Log in to [Render.com](https://render.com).
+   - In the dashboard, click **New +** $\rightarrow$ select **Web Service**.
+   - Connect your GitHub account and choose the `speakwise-ai` repository.
+
+4. **Select Node Environment**:
+   - In the **Runtime / Environment** field, select **Node** (do NOT select Python).
+
+5. **Leave Root Directory Blank**:
+   - Keep the **Root Directory** field empty (so Render builds from the repository root).
+
+6. **Set Build Command**:
+   - Enter:
      ```bash
      npm install && npm run build
      ```
-   - **Start Command**:
+
+7. **Set Start Command**:
+   - Enter:
      ```bash
      npm start
      ```
-4. **Add Persistent Disk** (to preserve user accounts, streaks, and practice data):
-   - In the service settings, scroll to **Disks** $\rightarrow$ Click **Add Disk**.
-   - **Name**: `speakwise-storage`
-   - **Mount Path**: `/var/data`
-   - **Size**: `1 GB` (sufficient for thousands of users)
-5. **Set Environment Variables**:
-   - `NODE_ENV` = `production`
-   - `JWT_SECRET` = *(Generate a secure random string)*
-   - `DATABASE_PATH` = `/var/data/speakwise.db`
-   - `AI_API_KEY` = *(Optional)*
-6. Click **Create Web Service**.
+
+8. **Add Environment Variables**:
+   - In the **Environment Variables** section, add:
+     - `NODE_ENV` = `production`
+     - `JWT_SECRET` = *(Generate a secure random 32+ character key)*
+     - `DATABASE_PATH` = `/var/data/speakwise.db` *(if using a persistent disk)*
+     - `CORS_ORIGIN` = `*`
+     - `AI_API_KEY` = *(Optional Gemini key, leave blank for built-in engine)*
+   - *(Optional but recommended)* Under **Disks**, add a disk mounted at `/var/data` (1 GB) to persist SQLite data across deployments.
+
+9. **Deploy**:
+   - Click **Create Web Service**. Render will install dependencies, build the React SPA, and start the Express server.
+
+10. **Open Render Live URL**:
+    - Once the service status turns **Live**, click your unique Render URL (e.g., `https://speakwise-ai.onrender.com`) to open and use your live application!
 
 ---
 
@@ -179,12 +202,15 @@ Once your deployment completes and gives you a URL (e.g., `https://speakwise-ai.
    - Log out and test signing back in via `/login`.
 4. **Test Route Protection**:
    - Open an Incognito/Private window.
-   - Navigate to `https://<your-deployed-domain>/ai-assistant` or `/dashboard`.
+   - Navigate to `https://<your-deployed-domain>/dashboard` or `/translate`.
    - Confirm automatic redirect to `/login`.
-5. **Test AI Assistant Conversations**:
-   Test the 10 required prompt scenarios in the AI Assistant chat.
-6. **Test Theme Switcher**:
-   - Test switching between all 6 themes (Light, Dark, Purple Dream, Ocean, Forest, Sunset) and refresh the page to verify persistence.
+5. **Test the 4 Core Learning Features**:
+   - **Marathi → English**: Enter `मला आज कॉलेजला जायचं आहे.` and verify accurate English translation output.
+   - **Pronunciation**: Look up words like `tiger`, `confidence`, `beautiful` and verify Marathi meaning, breakdown, and audio playback.
+   - **Practice**: Answer a translation exercise and verify evaluation feedback and non-repeating questions.
+   - **Grammar Library**: Browse rules, examples, and tenses.
+6. **Test Theme Switcher & Streaks**:
+   - Test switching between themes and verify daily streak updates on the dashboard.
 
 ---
 

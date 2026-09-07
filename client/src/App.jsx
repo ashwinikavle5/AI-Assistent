@@ -9,11 +9,9 @@ import { AppLayout } from './components/layout/AppLayout';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
-import { AIAssistant } from './pages/AIAssistant';
+import { NativeLanguage } from './pages/NativeLanguage';
 import { Pronunciation } from './pages/Pronunciation';
 import { Practice } from './pages/Practice';
-import { Streak } from './pages/Streak';
-import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
 
 // Root gatekeeper: redirects based on authentication state
@@ -39,12 +37,17 @@ export default function App() {
               <Route element={<ProtectedRoute />}>
                 <Route element={<AppLayout />}>
                   <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/ai-assistant" element={<AIAssistant />} />
+                  <Route path="/native-language" element={<NativeLanguage />} />
                   <Route path="/pronunciation" element={<Pronunciation />} />
                   <Route path="/practice" element={<Practice />} />
-                  <Route path="/streak" element={<Streak />} />
-                  <Route path="/profile" element={<Profile />} />
                   <Route path="/settings" element={<Settings />} />
+
+                  {/* Graceful redirects for clean navigation */}
+                  <Route path="/ai-assistant" element={<Navigate to="/practice" replace />} />
+                  <Route path="/streak" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/profile" element={<Navigate to="/settings" replace />} />
+                  <Route path="/progress" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/grammar" element={<Navigate to="/practice?tab=grammar" replace />} />
                 </Route>
               </Route>
 

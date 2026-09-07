@@ -2,31 +2,44 @@ const express = require('express');
 const router = express.Router();
 const { runQuery, getAll } = require('../db/database');
 const { authenticateToken } = require('../middleware/authMiddleware');
-const { fetchWordDetails } = require('../services/dictionaryService');
+const { analyzeWordPronunciation } = require('../services/pronunciationService');
 const { recordActivity } = require('../services/streakService');
 
-// Look up word details
-router.get('/lookup', authenticateToken, async (req, res) => {
+// Look up word details dynamically (supports /lookup?word=... and /:word)
+const handleLookup = async (req, res) => {
   try {
-    const { word } = req.query;
+    const word = req.query.word || req.params.word;
+    const result = await analyzeWordPronunciation(word);
 
-    if (!word || !word.trim()) {
-      return res.status(400).json({ success: false, message: 'Please provide a word to look up.' });
+    if (result && result.details) {
+      return res.json({
+        ...result,
+        word: result.details.word,
+        marathiMeaning: result.details.marathiMeaning,
+        definition: result.details.simpleEnglishMeaning,
+        simpleEnglishMeaning: result.details.simpleEnglishMeaning,
+        example: result.details.example,
+        partOfSpeech: result.details.partOfSpeech,
+        details: {
+          ...result.details,
+          definition: result.details.simpleEnglishMeaning
+        }
+      });
     }
 
-    const details = await fetchWordDetails(word.trim());
-    if (!details) {
-      return res.status(404).json({ success: false, message: 'Word not found in dictionary.' });
-    }
-
-    res.json({
-      success: true,
-      details
-    });
+    return res.json(result);
   } catch (err) {
     console.error('Error looking up pronunciation:', err);
     res.status(500).json({ success: false, message: 'Failed to look up word pronunciation.' });
   }
+};
+
+router.get('/lookup', handleLookup);
+router.get('/:word', (req, res, next) => {
+  if (['lookup', 'history', 'practice'].includes(req.params.word)) {
+    return next();
+  }
+  return handleLookup(req, res);
 });
 
 // Evaluate pronunciation practice attempt

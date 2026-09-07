@@ -69,7 +69,7 @@ export const ChatMessage = ({ message }) => {
             }`}
             style={{
               backgroundColor: isAI ? 'var(--chat-ai)' : 'var(--chat-user)',
-              border: isAI ? '1px solid var(--border-main)' : 'none',
+              border: isAI ? '1.5px solid var(--chat-ai-border)' : '1.5px solid var(--chat-user-border)',
               color: isAI ? 'var(--text-main)' : '#ffffff'
             }}
           >
@@ -109,6 +109,18 @@ export const ChatMessage = ({ message }) => {
             {/* Grammar Correction tray if applicable */}
             {message.grammar_correction && (
               <GrammarCorrection correction={message.grammar_correction} />
+            )}
+
+            {/* Tone & Confidence indicator on user messages */}
+            {!isAI && message.analysis && (
+              <div className="mt-2 pt-2 border-t border-white/20 flex flex-wrap items-center gap-1.5 text-[11px]">
+                <span className="px-2 py-0.5 rounded-lg font-medium bg-white/15 text-white/95 border border-white/25">
+                  Tone: {message.analysis.tone}
+                </span>
+                <span className="px-2 py-0.5 rounded-lg font-medium bg-white/15 text-white/95 border border-white/25">
+                  Confidence: {message.analysis.confidence} {message.analysis.confidence === 'High' ? '🟢' : message.analysis.confidence === 'Low' ? '🟠' : '🟡'}
+                </span>
+              </div>
             )}
           </div>
 

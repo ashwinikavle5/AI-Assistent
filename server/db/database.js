@@ -95,10 +95,17 @@ const initDb = async () => {
       marathi_normalized TEXT,
       english_translation TEXT,
       grammar_correction TEXT,
+      analysis TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(conversation_id) REFERENCES conversations(id)
     )
   `);
+
+  try {
+    await runQuery(`ALTER TABLE messages ADD COLUMN analysis TEXT`);
+  } catch (e) {
+    // Column already exists
+  }
 
   await runQuery(`
     CREATE TABLE IF NOT EXISTS practice_questions (

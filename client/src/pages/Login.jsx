@@ -104,7 +104,7 @@ export const Login = () => {
           {/* Value Props */}
           <div className="relative z-10 my-8 space-y-3">
             {[
-              "Understands Roman Marathi (e.g. 'jevn zal ka?')",
+              "Understands Roman Marathi",
               "Friendly real-time grammar corrections",
               "Interactive pronunciation coach with audio",
               "Persistent daily practice streaks & progress"
@@ -122,7 +122,7 @@ export const Login = () => {
               "SpeakWise AI made me overcome my fear of speaking English in college presentations!"
             </p>
             <p className="mt-2 font-semibold text-white text-[11px]">
-              — Rahul Patil, Pune
+              — Ashu Kawale
             </p>
           </div>
         </div>

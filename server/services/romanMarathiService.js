@@ -7,6 +7,8 @@
  * 4. Contextual English Meaning (Sentence-level semantic translation, NOT word-by-word)
  */
 
+const https = require('https');
+
 // Normalization dictionary for common Roman Marathi words and spelling variations
 const NORMALIZATION_MAP = {
   // Pronouns & Postpositions
@@ -47,7 +49,9 @@ const NORMALIZATION_MAP = {
   "zal": "zal", "zala": "zal", "jhala": "zal", "jhale": "zal",
 
   // Time & others
-  "aaj": "aaj", "udya": "udya", "kal": "kal",
+  "aaj": "aaj", "aj": "aaj", "udya": "udya", "kal": "kal", "parva": "parva", "parwa": "parva",
+  "maz": "maza", "madye": "madhe",
+  "bhiti": "bhiti", "bheeti": "bhiti", "vatate": "vatate", "vatte": "vatate",
   "bhetu": "bhetu", "bhetuya": "bhetu",
   "khup": "khup", "chan": "chhan", "chhan": "chhan"
 };
@@ -76,7 +80,46 @@ const PHRASE_DICTIONARY = [
     marathi: "मला माहित नाही, याचं answer कसं द्यायचं?",
     english: "I don't know how to answer this.",
     category: "learning_help",
-    intent: "ASK_HOW_TO_ANSWER"
+    intent: "ASK_HOW_TO_ANSWER",
+    learningSupport: {
+      naturalEnglish: "I don't know how to answer this.",
+      simpleExplanation: "Use this phrase when you are unsure of the right words or information to reply.",
+      example: "I don't know how to answer this question right now, but let me think."
+    }
+  },
+
+  // 1b. "mala English samjat nahi"
+  {
+    patterns: [
+      /\b(?:mala|मला)\s+(?:english|इंग्रजी)\s+(?:samjat|समजत)\s+(?:nahi|नाही)\b/i,
+      /\b(?:mala|मला)\s+(?:samjat|समजत)\s+(?:nahi|नाही)\b/i
+    ],
+    marathi: "मला English समजत नाही.",
+    english: "I don't understand English.",
+    category: "learning_help",
+    intent: "DONT_UNDERSTAND_ENGLISH",
+    learningSupport: {
+      naturalEnglish: "I don't understand English.",
+      simpleExplanation: "A clear way to express that you are having trouble following spoken or written English.",
+      example: "I don't understand English well yet, could you speak a bit slower?"
+    }
+  },
+
+  // 1c. "mala english madhe answer deta yet nahi" / "मला इंग्रजीमध्ये answer देता येत नाही."
+  {
+    patterns: [
+      /(?:mala|मला)?.*?(?:english|इंग्रजी)?.*?(?:madhe|मध्ये)?.*?(?:answer|uttar|उत्तर|bolta|बोलता)?.*?(?:deta\s+yet\s+nahi|yet\s+nahi|देता\s+येत\s+नाही|येत\s+नाही)/i,
+      /\b(?:deta|dyayla)\s+(?:yet|jamt)\s+nahi\b/i
+    ],
+    marathi: "मला इंग्रजीमध्ये answer देता येत नाही.",
+    english: "I can't answer in English.",
+    category: "learning_help",
+    intent: "CANNOT_ANSWER_ENGLISH",
+    learningSupport: {
+      naturalEnglish: "I can't answer in English.",
+      simpleExplanation: "This clearly expresses that you are currently unable to respond in English.",
+      example: "I can't answer in English right now, but I am learning every day."
+    }
   },
 
   // 2. "jevn zal ka?" and variants
@@ -88,7 +131,12 @@ const PHRASE_DICTIONARY = [
     marathi: "जेवण झालं का?",
     english: "Have you eaten?",
     category: "food",
-    intent: "ASK_EATEN"
+    intent: "ASK_EATEN",
+    learningSupport: {
+      naturalEnglish: "Have you eaten?",
+      simpleExplanation: "In English, we ask 'Have you eaten?' to check if someone has had their meal or food.",
+      example: "Have you eaten yet, or should we order lunch together?"
+    }
   },
 
   // 3. "majhe jevn zal"
@@ -201,6 +249,107 @@ const PHRASE_DICTIONARY = [
     intent: "COLLEGE_PRESENTATION"
   },
 
+  // 10b. "parva maz presentation ahe ani mala english madye problem jate"
+  {
+    patterns: [
+      /\bparva\b.*?(?:presentation|speech).*?(?:problem|adchan|trass|difficulty)/i,
+      /\b(?:parva|udya|aaj)\b.*?(?:maz|maza|majha|माझं)?\s*presentation.*?english.*?(?:problem|jate|yeto|adchan)/i,
+      /\bmala\s+english\s+mad[hy]e\s+problem\s+(?:jate|yeto)\b/i,
+      /परवा\s+माझं\s+presentation\s+आहे.*?English.*?problem/i
+    ],
+    marathi: "परवा माझं presentation आहे आणि मला English मध्ये problem जाते.",
+    english: "I have a presentation the day after tomorrow, and I have difficulty speaking in English.",
+    category: "presentation",
+    intent: "PRESENTATION_PROBLEM_PARVA"
+  },
+
+  // 10c. "mala udya presentation ahe ani mala english madhe problem jate"
+  {
+    patterns: [
+      /(?:mala|मला)?\s*(?:udya|उद्या)\s*(?:presentation|speech)\s*(?:ahe|aahe|आहे).*?(?:english|इंग्रजी).*?(?:problem|adchan|अडचण)/i,
+      /उद्या\s+माझं\s+presentation\s+आहे\s+आणि\s+मला\s+English\s+मध्ये\s+problem\s+जाते/i
+    ],
+    marathi: "मला उद्या presentation आहे आणि मला English मध्ये problem जाते.",
+    english: "I have a presentation tomorrow and I have difficulty speaking English.",
+    category: "presentation",
+    intent: "PRESENTATION_PROBLEM_UDYA"
+  },
+
+  // 10d. "mala interview la english bolayla bhiti vatate"
+  {
+    patterns: [
+      /interview.*?(?:bolayla|bolnyachi|bolnyas).*?(?:bhiti|bheeti|darr|fear|nervous)/i,
+      /interview.*?english.*?(?:bhiti|bheeti)\s+vat(?:ate|te)/i,
+      /मला\s+interview\s+ला\s+english\s+बोलायला\s+भीती\s+वाटते/i
+    ],
+    marathi: "मला interview ला english बोलायला भीती वाटते.",
+    english: "I feel nervous speaking English during interviews.",
+    category: "interview",
+    intent: "INTERVIEW_FEAR"
+  },
+
+  // 10e. "मला आज कॉलेजला जायचं आहे" / "mala aaj college la jaycha ahe"
+  {
+    patterns: [
+      /(?:mala|मला)?\s*(?:aaj|aj|आज)\s*(?:college|collegela|कॉलेज)\s*(?:la|ला)?\s*(?:jaycha|jaych|jaychay|जायचं)\s*(?:aa?he|ahe|आहे)?/i,
+      /\b(?:aaj|aj|आज)\s+(?:college|collegela|कॉलेज)\s*(?:la|ला)?\s*(?:jaycha|jaych|जायचं)\b/i,
+      /\bमला\s+आज\s+कॉलेजला\s+जायचं\s+आहे\b/i
+    ],
+    marathi: "मला आज कॉलेजला जायचं आहे.",
+    english: "I have to go to college today.",
+    category: "college",
+    intent: "TODAY_COLLEGE",
+    learningSupport: {
+      naturalEnglish: "I have to go to college today.",
+      simpleExplanation: "We use 'I have to...' to express an obligation or plan to do something today.",
+      example: "I have to go to college today because we have an important lecture."
+    }
+  },
+
+  // 10f. "mala English bolayla bhiti vatate" / "मला English बोलायला भीती वाटते"
+  {
+    patterns: [
+      /(?:mala|मला)?\s*(?:english|इंग्रजी)?\s*(?:bolayla|bolnyachi|बोलायला).*?(?:bhiti|bheeti|भीती)\s*(?:vatate|vatte|वाटते)/i,
+      /\b(?:english|इंग्रजी)\s+(?:bolayla|बोलायला)\s+(?:bhiti|भीती)\s+(?:vatate|वाटते)\b/i,
+      /\b(?:bhiti|bheeti)\s+(?:vatate|vatte)\b/i,
+      /\bमला\s+english\s+बोलायला\s+भीती\s+वाटते\b/i
+    ],
+    marathi: "मला English बोलायला भीती वाटते.",
+    english: "I am afraid to speak English.",
+    category: "confidence",
+    intent: "SPEAKING_FEAR",
+    learningSupport: {
+      naturalEnglish: "I am afraid to speak English.",
+      simpleExplanation: "This is a natural way to express that you feel nervous or scared when speaking English.",
+      example: "I am afraid to speak English in front of my classmates."
+    }
+  },
+
+  // 10g. "Today mala college madhe presentation hota." / "aaj college madhe presentation hota"
+  {
+    patterns: [
+      /(?:today|aaj|आज)\s+(?:mala|मला)?\s*(?:college|कॉलेज)\s*(?:madhe|मध्ये)\s*presentation\s*(?:hota|hote|होतं|होता)/i,
+      /\bpresentation\s+(?:hota|hote|होतं|होता)\b/i
+    ],
+    marathi: "आज कॉलेजमध्ये presentation होतं.",
+    english: "Today, I had a presentation at college.",
+    category: "college",
+    intent: "COLLEGE_PRESENTATION_PAST"
+  },
+
+  // 10h. Translation requests: "English madhe kasa mhantat?" / "translate this into English"
+  {
+    patterns: [
+      /(?:english\s+madhe\s+kasa\s+mhantat|kasa\s+mhantat|kasa\s+bolaycha|kasa\s+boltat)/i,
+      /(?:translate\s+(?:this\s+)?into\s+english|how\s+to\s+say\s+(?:this\s+)?in\s+english|how\s+do\s+you\s+say\s+(?:this\s+)?in\s+english)/i,
+      /इंग्रजीत\s+कसं\s+(?:म्हणतात|बोलायचं)/i
+    ],
+    marathi: "English मध्ये कसं म्हणतात?",
+    english: "How do you say this in English?",
+    category: "translation",
+    intent: "ASK_TRANSLATION"
+  },
+
   // 11. "udya bhetu"
   {
     patterns: [
@@ -283,9 +432,11 @@ const ROMAN_MARATHI_KEYWORDS = new Set([
   "kay", "mala", "tula", "tyala", "tila", "aamhi", "tumhi", "mahit", "mahiti", "nahi", "naahi",
   "yach", "yacha", "yachi", "yache", "ans", "uttar", "dyaych", "dyaycha", "dyaychi", "karaych",
   "karaycha", "karaychi", "aahe", "ahe", "ahes", "aahes", "ahat", "aahat", "hota", "hoti", "hote",
-  "udya", "kal", "aaj", "diwas", "divas", "shikaych", "shikaycha", "shikaychay", "bolaych",
+  "udya", "kal", "aaj", "aj", "parva", "parwa", "diwas", "divas", "shikaych", "shikaycha", "shikaychay", "bolaych",
   "bolaycha", "samjat", "samajla", "kalala", "kuthe", "kadhi", "kiti", "bhetu", "bhetuya",
-  "madat", "abhyas", "shala", "kam", "ghar", "ghari", "mitra", "pani", "chaha", "khup", "chhan", "chan"
+  "madat", "abhyas", "shala", "kam", "ghar", "ghari", "mitra", "pani", "chaha", "khup", "chhan", "chan",
+  "maz", "madye", "madhe", "bhiti", "bheeti", "vatate", "vatte", "problem", "jate", "yeto",
+  "jaycha", "jaych", "jaychay", "bolayla", "jaych", "deta", "yet"
 ]);
 
 // Detect script and language mode
@@ -353,6 +504,11 @@ const processRomanMarathi = (text) => {
           isRomanMarathi: true,
           normalizedMarathi: item.marathi,
           englishTranslation: item.english,
+          learningSupport: item.learningSupport || {
+            naturalEnglish: item.english,
+            simpleExplanation: `A natural English sentence to express this thought in everyday conversation.`,
+            example: `Practice saying this sentence aloud to build fluency.`
+          },
           category: item.category,
           intent: item.intent
         };
@@ -364,50 +520,75 @@ const processRomanMarathi = (text) => {
   const lower = clean.toLowerCase();
   
   if (/mala\b.*?\b(?:shik|bol|practice)\b/i.test(lower)) {
+    const english = "I want to practice speaking English.";
     return {
       isRomanMarathi: true,
       normalizedMarathi: "मला इंग्रजी बोलायला शिकायचं / practice करायची आहे.",
-      englishTranslation: "I want to practice speaking English.",
+      englishTranslation: english,
+      learningSupport: {
+        naturalEnglish: english,
+        simpleExplanation: "Use this to politely let others know that you want to practice your spoken English.",
+        example: "I want to practice speaking English every morning with my tutor."
+      },
       category: "learning",
       intent: "WANT_PRACTICE_ENGLISH"
     };
   }
 
   if (/mahit\s+nahi|mahiti\s+nahi|samjat\s+nahi/i.test(lower)) {
+    const english = "I don't know.";
     return {
       isRomanMarathi: true,
       normalizedMarathi: "मला माहित नाही.",
-      englishTranslation: "I don't know / I'm not sure.",
+      englishTranslation: english,
+      learningSupport: {
+        naturalEnglish: english,
+        simpleExplanation: "A straightforward, polite expression when you do not possess the required information.",
+        example: "I don't know the exact schedule yet, but I will check and let you know."
+      },
       category: "conversation",
       intent: "DO_NOT_KNOW"
     };
   }
 
   if (/jevn|jevan|jevna/i.test(lower)) {
+    const english = "Have you eaten?";
     return {
       isRomanMarathi: true,
       normalizedMarathi: "जेवण झालं का?",
-      englishTranslation: "Have you eaten?",
+      englishTranslation: english,
+      learningSupport: {
+        naturalEnglish: english,
+        simpleExplanation: "In English, we ask 'Have you eaten?' to check if someone has had their meal or food.",
+        example: "Have you eaten yet, or should we order lunch together?"
+      },
       category: "food",
       intent: "ASK_EATEN"
     };
   }
 
   if (/kasa\s+ahes|kashi\s+ahes|kase\s+ahat/i.test(lower)) {
+    const english = "How are you?";
     return {
       isRomanMarathi: true,
       normalizedMarathi: "तू कसा आहेस?",
-      englishTranslation: "How are you?",
+      englishTranslation: english,
+      learningSupport: {
+        naturalEnglish: english,
+        simpleExplanation: "The most common and friendly greeting to ask about someone's wellbeing.",
+        example: "Hello! How are you doing today?"
+      },
       category: "greeting",
       intent: "ASK_HOW_ARE_YOU"
     };
   }
 
-  // Generic Roman Marathi detected: return clean sentence interpretation (never word-by-word string concatenation)
+  // Generic Roman Marathi detected: return clean sentence interpretation
   return {
     isRomanMarathi: true,
     normalizedMarathi: clean,
     englishTranslation: null,
+    learningSupport: null,
     category: "general",
     intent: "CONVERSATIONAL_MARATHI"
   };
@@ -424,8 +605,8 @@ const translateMarathiToEnglish = (text) => {
   }
 
   const DEVANAGARI_MAP = {
-    "माझं जेवण झालं": "I have eaten / I had my meal.",
-    "माझे जेवण झाले": "I had my meal / I have eaten.",
+    "माझं जेवण झालं": "I have eaten.",
+    "माझे जेवण झाले": "I have eaten.",
     "जेवण झालं का": "Have you eaten?",
     "तू कसा आहेस": "How are you?",
     "तुम्ही कसे आहात": "How are you?",
@@ -438,7 +619,13 @@ const translateMarathiToEnglish = (text) => {
     "मला समजत नाही": "I do not understand.",
     "मला माहित नाही": "I do not know.",
     "आज कॉलेजमध्ये प्रेझेंटेशन आहे": "I have a presentation in college today.",
-    "आज college मध्ये presentation आहे": "I have a presentation in college today."
+    "आज college मध्ये presentation आहे": "I have a presentation in college today.",
+    "आज कॉलेजमध्ये presentation होतं": "Today, I had a presentation at college.",
+    "मला आज कॉलेजला जायचं आहे": "I have to go to college today.",
+    "मला इंग्रजी बोलायला भीती वाटते": "I am afraid to speak English.",
+    "मला English बोलायला भीती वाटते": "I am afraid to speak English.",
+    "मला इंग्रजीमध्ये answer देता येत नाही": "I can't answer in English.",
+    "मला English मध्ये answer देता येत नाही": "I can't answer in English."
   };
 
   for (const [key, val] of Object.entries(DEVANAGARI_MAP)) {
@@ -450,10 +637,235 @@ const translateMarathiToEnglish = (text) => {
   return null;
 };
 
+// Map Roman Marathi words & common variations to Marathi Devanagari
+const ROMAN_TO_MARATHI_MAP = {
+  "mala": "मला", "tula": "तुला", "tyala": "त्याला", "tila": "तिला",
+  "amhi": "आम्ही", "aamhi": "आम्ही", "tumhi": "तुम्ही", "tumi": "तुम्ही",
+  "mi": "मी", "mee": "मी", "tu": "तू",
+  "aj": "आज", "aaj": "आज", "udya": "उद्या", "kal": "काल", "parva": "परवा", "parwa": "परवा",
+  "college": "कॉलेज", "la": "ला", "madhe": "मध्ये", "madye": "मध्ये",
+  "jaych": "जायचं", "jaycha": "जायचं", "jaaych": "जायचं", "jaaycha": "जायचं",
+  "ahe": "आहे", "aahe": "आहे", "ahes": "आहेस", "aahes": "आहेस", "ahat": "आहात", "aahat": "आहात",
+  "hota": "होता", "hoti": "होती", "hote": "होते",
+  "mahit": "माहित", "mahiti": "माहिती", "maheeth": "माहित",
+  "samjat": "समजत", "samajla": "समजलं", "samajle": "समजले",
+  "nahi": "नाही", "naahi": "नाही", "nahiy": "नाही", "nay": "नाही",
+  "yach": "याचं", "yacha": "याचा", "yachi": "याची", "yache": "याचे",
+  "ans": "answer", "answer": "answer", "uttar": "उत्तर",
+  "ks": "कसं", "kasa": "कसं", "kashi": "कशी", "kase": "कसे",
+  "dyaych": "द्यायचं", "dyaycha": "द्यायचं", "daycha": "द्यायचं", "dyave": "द्यावे",
+  "english": "English", "ingreji": "इंग्रजी",
+  "bolayla": "बोलायला", "bolaych": "बोलायचं", "bolta": "बोलता", "bolto": "बोलतो", "bolte": "बोलते",
+  "bhiti": "भीती", "bheeti": "भीती",
+  "vatate": "वाटते", "vatte": "वाटते", "watate": "वाटते",
+  "jevn": "जेवण", "jevan": "जेवण", "jevna": "जेवण", "jevlis": "जेवलीस", "jevla": "जेवला",
+  "zal": "झालं", "zala": "झालं", "zali": "झाली", "jhala": "झालं", "jhale": "झाले",
+  "ka": "का", "kaa": "का", "kay": "काय", "kaay": "काय",
+  "kuthe": "कुठे", "kothe": "कुठे", "kadhi": "कधी", "kiti": "किती",
+  "shikaych": "शिकायचं", "shikaycha": "शिकायचं", "shikto": "शिकतो", "shikte": "शिकते",
+  "karaych": "करायचं", "karaycha": "करायचं", "kartoy": "करतोय", "kartes": "करतेस",
+  "ghari": "घरी", "ghar": "घरी", "kam": "काम", "kaam": "काम",
+  "khup": "खूप", "khoop": "खूप", "chhan": "छान", "chan": "छान",
+  "bhetu": "भेटू", "bhetuya": "भेटूया", "ho": "हो", "ha": "हो",
+  "nakki": "नक्की", "lavkar": "लवकर", "sang": "सांग", "sanga": "सांगा",
+  "yenar": "येणार", "janar": "जाणार", "bhuk": "भूक", "lagli": "लागली",
+  "paani": "पाणी", "pani": "पाणी", "dya": "द्या", "ghya": "घ्या"
+};
+
+// Convert Roman Marathi words/variations into natural Marathi Devanagari
+const convertRomanMarathiToDevanagari = (text) => {
+  let res = text.trim();
+  // Multi-word phrases and idioms first
+  res = res.replace(/\bcollege\s+la\b/gi, 'कॉलेजला');
+  res = res.replace(/\bdeta\s+yet\s+nahi\b/gi, 'देता येत नाही');
+  res = res.replace(/\bbhiti\s+(?:vatate|vatte|watate)\b/gi, 'भीती वाटते');
+  res = res.replace(/\byach\s+(?:ans|answer)\b/gi, 'याचं answer');
+  res = res.replace(/\b(?:ans|answer)\s+ks\s+dyaych\b/gi, 'answer कसं द्यायचं');
+  res = res.replace(/\bjevn\s+(?:zal|zala|jhala)\s+ka\b/gi, 'जेवण झालं का');
+
+  const tokens = res.split(/(\s+|[.,?!;:])/);
+  const converted = tokens.map(token => {
+    const cleanWord = token.toLowerCase();
+    return ROMAN_TO_MARATHI_MAP[cleanWord] || token;
+  });
+
+  return converted.join('');
+};
+
+// Fast translation helper for Marathi -> English using reliable translation service with 2.5s timeout
+const translateMarathiSentenceToEnglish = async (marathiText) => {
+  return new Promise((resolve, reject) => {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=mr&tl=en&dt=t&q=${encodeURIComponent(marathiText)}`;
+    const req = https.get(url, (res) => {
+      if (res.statusCode !== 200) return reject(new Error(`Status ${res.statusCode}`));
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          if (Array.isArray(parsed) && Array.isArray(parsed[0])) {
+            const fullTranslation = parsed[0].map(item => item[0]).filter(Boolean).join('');
+            resolve(fullTranslation.trim());
+          } else {
+            resolve(null);
+          }
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    });
+
+    req.on('error', (err) => reject(err));
+    req.setTimeout(2500, () => {
+      req.destroy();
+      reject(new Error('Translation timeout'));
+    });
+  });
+};
+
+// Comprehensive Native to English Translation Orchestrator
+const translateNativeToEnglish = async (rawText) => {
+  if (!rawText || typeof rawText !== 'string' || !rawText.trim()) {
+    return {
+      success: false,
+      error: 'EMPTY_INPUT',
+      message: 'Please enter a Marathi or Roman Marathi sentence.'
+    };
+  }
+
+  const clean = rawText.trim();
+
+  // Reject pure digits or pure punctuation/symbols without letters or Devanagari characters
+  const lettersOnly = clean.replace(/[^a-zA-Z\u0900-\u097F]/g, '');
+  if (lettersOnly.length < 2) {
+    return {
+      success: false,
+      error: 'UNCLEAR',
+      message: "I didn't fully understand that sentence."
+    };
+  }
+
+  // Reject pure gibberish with no vowels, 5+ consecutive consonants, or repetitive characters
+  if (
+    (!/[aeiouy\u0900-\u097F]/i.test(clean) && clean.length > 2) ||
+    /[b-df-hj-np-tv-z]{5,}/i.test(clean) ||
+    /(.)\1{4,}/i.test(clean)
+  ) {
+    return {
+      success: false,
+      error: 'UNCLEAR',
+      message: "I didn't fully understand that sentence."
+    };
+  }
+
+  const detectedLang = detectLanguage(clean);
+  let englishTranslation = null;
+  let marathiNormalized = clean;
+  let learningSupport = null;
+
+  // Convert Roman Marathi to Devanagari Marathi representation
+  const convertedMarathi = /[\u0900-\u097F]/.test(clean)
+    ? clean
+    : convertRomanMarathiToDevanagari(clean);
+
+  const normalizedRoman = normalizeRomanMarathiText(clean);
+
+  // 1. Check phrase dictionary first across original input, converted Devanagari, and normalized text
+  for (const item of PHRASE_DICTIONARY) {
+    let matched = false;
+    for (const pattern of item.patterns) {
+      if (pattern.test(clean) || pattern.test(normalizedRoman) || pattern.test(convertedMarathi)) {
+        matched = true;
+        break;
+      }
+    }
+
+    if (matched || clean.includes(item.marathi.replace(/[.?!]/g, '')) || convertedMarathi.includes(item.marathi.replace(/[.?!]/g, ''))) {
+      englishTranslation = item.english;
+      marathiNormalized = item.marathi;
+      learningSupport = item.learningSupport;
+      break;
+    }
+  }
+
+  // 2. If not matched in PHRASE_DICTIONARY, check DEVANAGARI_MAP
+  if (!englishTranslation) {
+    englishTranslation = translateMarathiToEnglish(clean) || translateMarathiToEnglish(convertedMarathi);
+    if (englishTranslation) {
+      marathiNormalized = convertedMarathi;
+    }
+  }
+
+  // 3. If still not matched, translate whole Marathi sentence using dynamic translation engine
+  let networkError = false;
+  if (!englishTranslation) {
+    try {
+      const onlineEng = await translateMarathiSentenceToEnglish(convertedMarathi);
+      if (onlineEng && onlineEng.trim()) {
+        const trimmed = onlineEng.trim();
+        const hasDevanagari = /[\u0900-\u097F]/.test(clean);
+        // If translation just echoed back input with no Devanagari conversion and input is not translated
+        const isEcho = trimmed.toLowerCase() === clean.toLowerCase() && !hasDevanagari;
+        if (!isEcho) {
+          englishTranslation = trimmed;
+          marathiNormalized = convertedMarathi;
+          learningSupport = {
+            naturalEnglish: englishTranslation,
+            simpleExplanation: "A natural English translation to communicate this thought effectively.",
+            example: `Practice saying: "${englishTranslation}" in your daily conversations.`
+          };
+        }
+      }
+    } catch (err) {
+      console.warn('Online Marathi translation warning:', err.message);
+      networkError = true;
+    }
+  }
+
+  // 4. Return result if translation was successful
+  if (englishTranslation) {
+    englishTranslation = englishTranslation.replace(/^\s*["']|["']\s*$/g, '').trim();
+
+    if (!learningSupport) {
+      learningSupport = {
+        naturalEnglish: englishTranslation,
+        simpleExplanation: `This is a natural way in English to express your Marathi thought clearly.`,
+        example: `Practice saying: "${englishTranslation}" in your daily conversations.`
+      };
+    }
+
+    return {
+      success: true,
+      original: clean,
+      detectedLang,
+      marathiNormalized,
+      englishTranslation,
+      learningSupport
+    };
+  }
+
+  // 5. If network or service failed on a plausible sentence
+  if (networkError) {
+    return {
+      success: false,
+      error: 'SERVICE_UNAVAILABLE',
+      message: 'Translation service is temporarily unavailable. Please try again.'
+    };
+  }
+
+  // 6. Genuinely unclear sentence
+  return {
+    success: false,
+    error: 'UNCLEAR',
+    message: "I didn't fully understand that sentence."
+  };
+};
+
 module.exports = {
   detectLanguage,
   processRomanMarathi,
   translateMarathiToEnglish,
+  translateNativeToEnglish,
   normalizeRomanMarathiText,
   PHRASE_DICTIONARY
 };

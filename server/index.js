@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const { initDb } = require('./db/database');
+const { initDb, db } = require('./db/database');
 
 const authRoutes = require('./routes/authRoutes');
 const aiRoutes = require('./routes/aiRoutes');
@@ -80,8 +80,9 @@ app.use((err, req, res, next) => {
 });
 
 // Initialize database schema and start server
+let server;
 initDb().then(() => {
-  app.listen(PORT, () => {
+  server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`========================================`);
     console.log(`🚀 SpeakWise AI Backend Server running on port ${PORT}`);
     console.log(`📡 Health: http://localhost:${PORT}/api/health`);
@@ -91,3 +92,32 @@ initDb().then(() => {
 }).catch(err => {
   console.error('Failed to initialize database on startup:', err);
 });
+
+// Graceful shutdown handling for container and cloud platforms
+const gracefulShutdown = (signal) => {
+  console.log(`\n${signal} signal received: closing HTTP server and database...`);
+  if (server) {
+    server.close(() => {
+      console.log('HTTP server closed.');
+      if (db && typeof db.close === 'function') {
+        db.close((err) => {
+          if (err) {
+            console.error('Error closing database:', err.message);
+            process.exit(1);
+          } else {
+            console.log('Database connection closed cleanly.');
+            process.exit(0);
+          }
+        });
+      } else {
+        process.exit(0);
+      }
+    });
+  } else {
+    process.exit(0);
+  }
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
