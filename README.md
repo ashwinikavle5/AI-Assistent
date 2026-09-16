@@ -6,7 +6,7 @@
 SpeakWise AI is an AI-powered English learning platform designed especially for Marathi-speaking learners. It helps users translate Marathi thoughts into natural English, improve grammar, practice pronunciation, learn grammar concepts, and develop English speaking confidence through interactive practice.
 
 ---
-# 1. Introduction
+# 📌 1. Introduction
 
 SpeakWise AI is a web-based English learning platform that helps Marathi-speaking learners improve their English communication skills.
 
@@ -62,7 +62,7 @@ SpeakWise AI provides an interactive platform to address these problems through 
 
 ---
 
-# 5. Technology Stack
+# 🛠️ 5. Technology Stack
 
 | Technology     | Purpose                                    |
 | -------------- | ------------------------------------------ |
@@ -87,7 +87,6 @@ SpeakWise AI provides an interactive platform to address these problems through 
 ## 6.1 Native Language → English
 
 Users can enter Marathi sentences and receive their English translation.
-
 The module focuses on producing natural and understandable English rather than direct word-to-word translation.
 
 ## 6.2 Grammar Correction
@@ -97,7 +96,6 @@ The system identifies common grammar mistakes and provides corrected English sen
 ## 6.3 Grammar Learning
 
 The Grammar module provides structured English grammar topics ranging from basic to advanced concepts.
-
 Examples include:
 
 * Parts of Speech
@@ -112,7 +110,6 @@ Examples include:
 ## 6.4 Pronunciation
 
 Users can search for an English word and receive:
-
 * Pronunciation
 * Meaning
 * Example sentence
@@ -121,19 +118,16 @@ Users can search for an English word and receive:
 ## 6.5 English Practice
 
 Users receive practice questions or Marathi prompts and respond in English.
-
 The system evaluates the response and provides correction or feedback.
 
 ## 6.6 Voice Support
 
 The application supports:
-
 * Speech-to-Text for voice input.
 * Text-to-Speech for listening to English responses.
-
 ---
 
-# 7. AI and NLP Concepts Used
+# 🧠 7. AI and NLP Concepts Used
 
 SpeakWise AI uses Natural Language Processing and AI-based workflows to support English learning.
 
@@ -156,7 +150,6 @@ The practice module can maintain conversation context to provide more natural re
 ### Speech Processing
 
 Speech-to-Text converts spoken input into text, while Text-to-Speech converts text responses into audio.
-
 ---
 
 # 8. Project Structure
@@ -323,7 +316,7 @@ The user interacts with the React-based interface. Requests are processed throug
 
 ---
 
-# 13. Security Implementation
+# 🔐 13. Security Implementation
 
 * User authentication is implemented for protected application features.
 * Passwords should be stored securely using password hashing.
@@ -337,12 +330,10 @@ The user interacts with the React-based interface. Requests are processed throug
 
 ---
 
-# 14. User Interface
+#  🖥️ 14. User Interface
 
 SpeakWise AI provides a clean and responsive interface with a navigation sidebar.
-
 ### Main Navigation
-
 * Dashboard
 * Native Language → English
 * Pronunciation
@@ -358,37 +349,29 @@ The interface is designed to provide easy navigation between different English l
 # 15. How to Use SpeakWise AI
 
 ### Step 1 — Register / Login
-
 Create an account or log in to access the learning modules.
 
 ### Step 2 — Dashboard
-
 Open the dashboard and select the required learning module.
 
 ### Step 3 — Translation
-
 Enter or speak a Marathi sentence and receive an English translation.
 
 ### Step 4 — Pronunciation
-
 Search for an English word to hear its pronunciation and understand its meaning.
 
 ### Step 5 — Practice
-
 Answer English practice questions and receive feedback.
 
 ### Step 6 — Grammar
-
 Select grammar topics and study explanations and examples.
 
 ### Step 7 — Voice Practice
-
 Use the microphone to convert speech into text and practice spoken English.
 
 ---
 
-# 16. Testing
-
+# 🧪 16. Testing
 The application was tested for the following major functions:
 
 | Test Case          | Expected Result                           |
@@ -407,7 +390,7 @@ The application was tested for the following major functions:
 
 ---
 
-# 17. Hosting
+# 🌐 17. Hosting
 
 The SpeakWise AI application is deployed using **Render**.
 
@@ -415,7 +398,7 @@ The SpeakWise AI application is deployed using **Render**.
 
 
 ---
-# 18. Future Enhancements
+# 🚀 18. Future Enhancements
 
 * Multi-language support for additional Indian languages.
 * Personalized AI learning paths.
@@ -430,7 +413,7 @@ The SpeakWise AI application is deployed using **Render**.
 
 ---
 
-# 19. Conclusion
+# 📜 19. Conclusion
 
 SpeakWise AI is an interactive English learning platform designed to help Marathi-speaking learners improve their English communication skills.
 The project combines React.js, Node.js, Express.js, SQLite, AI/NLP processing, and voice technologies to provide translation, grammar correction, pronunciation practice, and interactive English learning.
