@@ -1,6 +1,6 @@
-# SPEAKWISE AI
+# 🗣️ SPEAKWISE AI
 
-**“Think in Marathi. Speak in English. Speak with Confidence.”**
+**“ 💬 Think in Marathi. Speak in English. Speak with Confidence.”**
 ## Project Summary
 
 SpeakWise AI is an AI-powered English learning platform designed especially for Marathi-speaking learners. It helps users translate Marathi thoughts into natural English, improve grammar, practice pronunciation, learn grammar concepts, and develop English speaking confidence through interactive practice.
@@ -14,13 +14,9 @@ The application combines translation, grammar correction, pronunciation assistan
 
 It provides a simple and interactive environment where users can practice English without hesitation and gradually improve their communication skills.
 
-### Application Flow
-
-**User Input → React Interface → Node.js / Express Server → AI / NLP Processing → Response → Browser**
-
 ---
 
-# 2. Problem Statement
+# ⚠️ 2. Problem Statement
 
 Many Marathi-speaking learners face difficulty while converting their thoughts into English and speaking confidently.
 
@@ -37,7 +33,7 @@ SpeakWise AI provides an interactive platform to address these problems through 
 
 ---
 
-# 3. Objectives
+# 🎯 3. Objectives
 
 * Improve English speaking confidence.
 * Help users translate Marathi thoughts into natural English.
@@ -132,23 +128,18 @@ The application supports:
 SpeakWise AI uses Natural Language Processing and AI-based workflows to support English learning.
 
 ### Language Understanding
-
 The system processes user language input and identifies the intended meaning.
 
 ### Translation
-
 Marathi language input is processed and converted into meaningful English sentences.
 
 ### Grammar Error Correction
-
 The system identifies grammatical errors and generates corrected suggestions.
 
 ### Context-Aware Conversation
-
 The practice module can maintain conversation context to provide more natural responses.
 
 ### Speech Processing
-
 Speech-to-Text converts spoken input into text, while Text-to-Speech converts text responses into audio.
 ---
 
@@ -197,7 +188,7 @@ speakwise-ai/
 
 ---
 
-# 9. Important Files
+# 📂 9. Important Files
 
 | File / Folder      | Description                      |
 | ------------------ | -------------------------------- |
@@ -218,7 +209,7 @@ speakwise-ai/
 
 ---
 
-# 10. Database Design
+# 🗄️ 10. Database Design
 
 SpeakWise AI uses SQLite for storing application data.
 
@@ -243,7 +234,6 @@ SpeakWise AI uses SQLite for storing application data.
 | completed_at | DATETIME  | Default Timestamp           |
 
 ### Practice / Learning Data
-
 The application can store user learning activity such as practice attempts, progress, and streak information.
 
 ### Simple Schema
@@ -272,7 +262,7 @@ PROGRESS
 
 ---
 
-# 11. Application Flow
+# 🔄 11. Application Flow
 
 ```text
               USER
