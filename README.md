@@ -12,8 +12,6 @@ SpeakWise AI is a web-based English learning platform that helps Marathi-speakin
 
 The application combines translation, grammar correction, pronunciation assistance, English practice, and voice interaction into a single learning platform.
 
-It provides a simple and interactive environment where users can practice English without hesitation and gradually improve their communication skills.
-
 ---
 
 # ⚠️ 2. Problem Statement
@@ -42,7 +40,6 @@ SpeakWise AI provides an interactive platform to address these problems through 
 * Provide structured grammar learning.
 * Provide interactive English practice.
 * Support voice-based learning using Speech-to-Text and Text-to-Speech.
-* Provide a simple and responsive learning interface.
 
 ---
 
@@ -52,8 +49,7 @@ SpeakWise AI provides an interactive platform to address these problems through 
 | 1 | 🔀 **Native Translation**   | Marathi/Roman Marathi → natural English |
 | 2 | 📝 **Grammar Correction**   | Detects and explains grammar mistakes   |
 | 3 | 📖 **Grammar Learning**     | Basic to advanced grammar lessons       |
-| 4 | 🗣️ **Pronunciation Guide** | Audio + meanings + examples             |
-| 5 | 💬 **English Practice**     | Interactive English practice            |
+| 4 | 🗣️ **Pronunciation Guide** | Audio + meanings + examples             |         |
 | 6 | 🎙️ **Voice Support**       | Speech-to-Text + Text-to-Speech         |
 
 ---
@@ -399,16 +395,13 @@ The SpeakWise AI application is deployed using **Render**.
 * Daily learning challenges.
 * Advanced progress analytics.
 * Offline learning support.
-* Improved conversational AI.
 
 ---
 
 # 📜 19. Conclusion
 
 SpeakWise AI is an interactive English learning platform designed to help Marathi-speaking learners improve their English communication skills.
-The project combines React.js, Node.js, Express.js, SQLite, AI/NLP processing, and voice technologies to provide translation, grammar correction, pronunciation practice, and interactive English learning.
-The system provides a practical and user-friendly environment where learners can practice English regularly and improve their communication confidence.
-
+The project combines React.js, Node.js, Express.js, SQLite, AI/NLP processing, and voice technologies to provide translation, grammar correction and pronunciation practice
 ---
 
 **MLU24F074 | SpeakWise AI**
