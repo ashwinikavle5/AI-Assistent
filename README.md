@@ -10,7 +10,7 @@ SpeakWise AI is an AI-powered English learning platform designed especially for 
 
 SpeakWise AI is a web-based English learning platform that helps Marathi-speaking learners improve their English communication skills.
 
-The application combines translation, grammar correction, pronunciation assistance, English practice, and voice interaction into a single learning platform.
+The application combines translation, grammar correction, pronunciation assistance and  English practice into a single learning platform.
 
 ---
 
